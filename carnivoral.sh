@@ -176,14 +176,15 @@ function listShares
     DOMAIN=$4
 
     if [ "$DOMAIN" == "notset" ]; then
-        DOMAIN=$($NMB -A $HOSTSMB |awk '{print $1}' |sed -n 2p)
-        if [ $DOMAIN == "notset" ]; then
+        if $NMB -A $HOSTSMB 2>&1 > /dev/null; then
+            DOMAIN=$($NMB -A $HOSTSMB |awk '{print $1}' |sed -n 2p)
+        else
             DOMAIN="WORKGROUP"
         fi
     fi 
 
     exec 2> /dev/null # GoHorse to clean the outputs
-    SHARES=$($SMB -g -L $HOSTSMB $OPTIONS |grep -i "Disk" |grep -v "print")
+    SHARES=$($SMB -g -L \\\\$HOSTSMB $OPTIONS |grep -i "Disk" |grep -v "print")
     SHARES=$(echo $SHARES |grep -i "Disk")
     exec 1> /dev/tty # GoHorse to clean the outputs 
 }
