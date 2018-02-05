@@ -27,7 +27,7 @@
         -h, --help                       Display options
         
 
-Scan internal network looking for files with credentials and sensitive information.
+Scan internal network looking for files with credentials and sensitive information on SMB shares.
 
 Requirements:
 
