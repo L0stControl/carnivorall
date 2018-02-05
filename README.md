@@ -27,3 +27,13 @@
         -h, --help                       Display options
         
 
+Scan internal network looking for files with credentials and sensitive information.
+
+Requirements:
+
+- Yara
+- smbclient 
+- xpdf-utils
+- zip
+- ruby
+- yara (only to use -y option)
