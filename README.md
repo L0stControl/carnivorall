@@ -31,7 +31,6 @@ Scan internal network looking for files with credentials and sensitive informati
 
 Requirements:
 
-- Yara
 - smbclient 
 - xpdf-utils
 - zip
