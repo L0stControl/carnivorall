@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors		 :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.2    
+#Version         :0.3    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -114,8 +114,9 @@ DOMAIN="${DOMAIN:=notset}"
 USERNAME="${USERNAME:=notset}"
 PASSWORD="${PASSWORD:=notset}"
 YARAFILE="${YARAFILE:=notset}"
-DELAY="${DELAY:=0.3}"
-PATTERNMATCH="${PATTERNMATCH:=senha passw username usuario users}"
+DELAY="${DELAY:=0.2}"
+PATTERNMATCH="${PATTERNMATCH:=senha passw}"
+PIDCARNIVORAL=$$
 MOUNTPOINT=~/.carnivoral/mnt
 SHARESFILE=~/.carnivoral/shares.txt
 FILESFOLDER=~/.carnivoral/files
@@ -134,12 +135,13 @@ WHITE="\033[1;37m"
 MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
+EXITCTRL=0
 
 if [ "$USERNAME" == "notset" -o $PASSWORD == "notset" ]; then
     OPTIONS="-N"
     OPTIONSMNT="-o user=,password="
 else
-    OPTIONS="-U $DOMAIN\\\\$USERNAME\%$PASSWORD"
+    OPTIONS="-U $DOMAIN\\$USERNAME%$PASSWORD"
     OPTIONSMNT="-o user=$USERNAME,password=$PASSWORD,workgroup=$DOMAIN"
 fi 
 
@@ -220,26 +222,12 @@ function generateTargets
 {
     > $SHARESFILE #Clean targets file
 
-    ./generateRange.rb $NETWORK |while read HOSTS 
+    generateRange.rb $NETWORK |while read HOSTS 
     do
         scanner $HOSTS &
         sleep $DELAY
     done
-}
-
-function mountTarget
-{
-HOSTSMB=$1
-PATHSMB=$2
-if [ $(id -u) -ne 0 ];then
-    echo
-    echo -e "$RED  You must be root to use this options =( $DEFAULTCOLOR"
-    echo
-    exit
-else
-    $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
-    trap '' 2 # Disable Ctrl-C  
-fi    
+sleep 7
 }
 
 function searchFilesByName
@@ -254,10 +242,10 @@ function searchFilesByName
  
     for p in $PATTERNMATCH
     do
-        find $MOUNTPOINT -iname "*"$p"*" -printf '%p\n' -type f -exec cp -n {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; | sed "s/^.\{,${#MOUNTPOINT}\}/ [+] - $HOSTSMB\/$PATHSMB/" | tail -n +2 |tee -a $LOG
+        find $MOUNTPOINT -iname "*"$p"*" -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; | sed "s/^.\{,${#MOUNTPOINT}\}/ [+] - $HOSTSMB\/$PATHSMB/" | tail -n +2 |tee -a $LOG
     done
     
-    if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/*)" ];then
+    if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
     echo
@@ -277,7 +265,7 @@ function searchFilesByContent
     find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG \;
 
     
-    if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/*)" ];then
+    if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
     echo
@@ -288,6 +276,28 @@ function umountTarget
 {
     $UMNT -l -f $MOUNTPOINT
     trap 2 # Enable Ctrl-C
+}
+
+function exitScan 
+{
+    echo -e "$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
+    umountTarget
+    kill -9 $PIDCARNIVORAL     
+}
+
+function mountTarget
+{
+HOSTSMB=$1
+PATHSMB=$2
+if [ $(id -u) -ne 0 ];then
+    echo
+    echo -e "$RED  You must be root to use this options =( $DEFAULTCOLOR"
+    echo
+    exit
+else
+    $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
+    trap exitScan 2 # Disable Ctrl-C   
+fi    
 }
 
 function searchFilesWithYara
@@ -312,12 +322,12 @@ fi
 checkHomeFolders
 generateTargets
 
+
 if [ -s "$SHARESFILE" ];then
     NUMBERLINESFILE=$(cat $SHARESFILE |wc -l)
     COUNT=1
     while :
     do
-       clear
        echo
        echo -e "$RED Choose your option $WHITE"
        
