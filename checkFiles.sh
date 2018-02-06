@@ -23,7 +23,7 @@ for WORDPATTERN in $PATTERNMATCH
             $UNZIP -q -o "$FILENAME" -d $TMPDIR
             if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" "$DSTFOLDER"
+                cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
@@ -32,7 +32,7 @@ for WORDPATTERN in $PATTERNMATCH
             $UNZIP -q -o "$FILENAME" -d $TMPDIR
             if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" $DSTFOLDER
+                cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
@@ -41,7 +41,7 @@ for WORDPATTERN in $PATTERNMATCH
             $UNZIP -q -o "$FILENAME" -d $TMPDIR
             if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" "$DSTFOLDER"
+                cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
@@ -49,7 +49,7 @@ for WORDPATTERN in $PATTERNMATCH
 
             if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" "$DSTFOLDER"
+                cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
@@ -57,7 +57,7 @@ for WORDPATTERN in $PATTERNMATCH
 
             if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" $DSTFOLDER
+                cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
     
@@ -65,20 +65,23 @@ for WORDPATTERN in $PATTERNMATCH
 
             if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" $DSTFOLDER
+                cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
+
+        elif [ ${FILENAME: -4} == ".zip" ];then
+                 
+                echo -e "$YELLOW [+] $WHITE ZIP file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
+                echo -e "$YELLOW The file $FILENAME was not copied $DEFAULTCOLOR"   
 
         elif [ ${FILENAME: -4} == ".pdf" ];then
 
             if $PDFTOTEXT "$FILENAME" - | grep --color -i -a "$WORDPATTERN" 2>&1 > /dev/null ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                cp -n "$FILENAME" $DSTFOLDER
+                cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
             
         fi
 done
 rm -rf $TMPDIR
-
-
