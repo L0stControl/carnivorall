@@ -16,67 +16,76 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 
+shopt -s nocasematch
+
 for WORDPATTERN in $PATTERNMATCH
     do
-        if [ ${FILENAME: -5} == ".xlsx" ];then
+        if [[ ${FILENAME: -5} =~ ".XLSX" ]];then
 
-            $UNZIP -q -o "$FILENAME" -d $TMPDIR
-            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
+            $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
+            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
-        elif [ ${FILENAME: -5} == ".docx" ];then
+        elif [[ ${FILENAME: -5} =~ ".DOCX" ]];then
     
-            $UNZIP -q -o "$FILENAME" -d $TMPDIR
-            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
+            $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
+            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
-        elif [ ${FILENAME: -5} == ".pptx" ];then
+        elif [[ ${FILENAME: -5} =~ ".PPTX" ]];then
 
-            $UNZIP -q -o "$FILENAME" -d $TMPDIR
-            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* 2>&1 > /dev/null ; then
+            $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
+            if grep --color -i -R "$WORDPATTERN" $TMPDIR/* > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
-        elif [ ${FILENAME: -4} == ".txt" ];then
-
-            if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
+        elif [[ ${FILENAME: -4} =~ ".TXT" ]];then
+#2>&1 > /dev/null
+            if grep --color -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" "$DSTFOLDER"
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
-        elif [ ${FILENAME: -4} == ".doc" ];then
+        elif [[ ${FILENAME: -5} =~ ".CONF" ]];then
 
-            if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
+            if grep --color -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
+                echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
+                cp --backup=numbered "$FILENAME" "$DSTFOLDER"
+                echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
+            fi
+
+        elif [[ ${FILENAME: -4} =~ ".DOC" ]];then
+
+            if grep --color -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
     
-        elif [ ${FILENAME: -4} == ".csv" ];then
+        elif [[ ${FILENAME: -4} =~ ".CSV" ]];then
 
-            if grep --color -i -a "$WORDPATTERN" "$FILENAME" 2>&1 > /dev/null ; then
+            if grep --color -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
             fi
 
-        elif [ ${FILENAME: -4} == ".zip" ];then
+        elif [[ ${FILENAME: -4} =~ ".ZIP" ]];then
                  
-                echo -e "$YELLOW [+] $WHITE ZIP file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
-                echo -e "$YELLOW The file $FILENAME was not copied $DEFAULTCOLOR"   
+                echo -e "$YELLOW [+] $WHITE ZIP file $FILENAME...... $GREEN[FOUND!] and was not copied $DEFAULTCOLOR"
 
-        elif [ ${FILENAME: -4} == ".pdf" ];then
+        elif [[ ${FILENAME: -4} =~ ".PDF" ]];then
 
-            if $PDFTOTEXT "$FILENAME" - | grep --color -i -a "$WORDPATTERN" 2>&1 > /dev/null ; then
+            if $PDFTOTEXT "$FILENAME" - | grep --color -i -a "$WORDPATTERN" > /dev/null 2>&1 ; then
                 echo -e "$GREEN [+] $WHITE Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAME...... $GREEN[FOUND!]$DEFAULTCOLOR"
                 cp --backup=numbered "$FILENAME" $DSTFOLDER
                 echo "Pattern $WORDPATTERN found on => $DSTFOLDER$(echo $FILENAME | awk -F"/" '{print $NF}')" >> $LOG
