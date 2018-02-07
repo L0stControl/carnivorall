@@ -4,11 +4,12 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors		 :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.3    
+#Version         :0.4    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
-export PATH=$PATH:$PWD/$(dirname $0)
+SCRIPTHOME=$(readlink -f "$0" | rev | cut -d '/' -f 2- | rev)
+export PATH=$PATH:$SCRIPTHOME
 
 function banner {
     cat << EOF
