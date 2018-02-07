@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors		 :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.4    
+#Version         :0.5.1    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -243,7 +243,7 @@ function searchFilesByName
  
     for p in $PATTERNMATCH
     do
-        find $MOUNTPOINT -iname "*"$p"*" -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; | sed "s/^.\{,${#MOUNTPOINT}\}/ [+] - $HOSTSMB\/$PATHSMB/" | tail -n +2 |tee -a $LOG
+        find $MOUNTPOINT \( -iname "*"$p"*" ! -iname "*.zip" \) -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; | sed "s/^.\{,${#MOUNTPOINT}\}/ [+] - $HOSTSMB\/$PATHSMB/" | tail -n +2 |tee -a $LOG
     done
     
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
