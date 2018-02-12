@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.5.2    
+#Version         :0.5.3    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -32,16 +32,20 @@ function banner {
 
     Usage: ./carnivoral.rb [options]
     
-        -n, --network <CIDR>             192.168.0.0/24
-        -d, --domain <domain>            Domain network
-        -u, --username <guest>           Domain Username 
-        -p, --password <guest>           Domain Username
-        -o, --only <contents|filenames>  Search ONLY by sensitve content or filenames
-        -m, --match "user passw senha"   Strings to match inside files
-        -y, --yara <juicy_files.txt>     Enable Yara search patterns
-        -D, --delay <Number>             Delay between requests  
-        -h, --help                       Display options
+        -n, --network <CIDR>                   192.168.0.0/24
+        -d, --domain <domain>                  Domain network
+        -u, --username <guest>                 Domain Username 
+        -p, --password <guest>                 Domain Username
+        -o, --only <contents|filenames|yara>   Search ONLY by sensitve contents, filenames or yara rules
+        -m, --match "user passw senha"         Strings to match inside files
+        -y, --yara <juicy_files.txt>           Enable Yara search patterns
+        -D, --delay <Number>                   Delay between requests  
+        -h, --help                             Display options
         
+        Ex1: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
+        Ex2: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
+        Ex3: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt 
+
 EOF
 }
 
@@ -57,9 +61,9 @@ fi
 POSITIONAL=()
 while [[ $# -gt 0 ]]
 do
-key="$1"
+KEY="$1"
 
-case $key in
+case $KEY in
     -n|--network)
     NETWORK="$2"
     shift # past argument
@@ -129,7 +133,6 @@ MOUNTPOINT=~/.carnivoral/mnt
 SHARESFILE=~/.carnivoral/shares.txt
 FILESFOLDER=~/.carnivoral/files
 SMB=$(whereis smbclient |awk '{print $2}')
-NMB=$(whereis nmblookup |awk '{print $2}')
 MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
@@ -144,14 +147,6 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 EXITCTRL=0
-
-if [ "$USERNAME" == "notset" -o $PASSWORD == "notset" ]; then
-    OPTIONS="-N"
-    OPTIONSMNT="-o user=,password="
-else
-    OPTIONS="-U $DOMAIN\\$USERNAME%$PASSWORD"
-    OPTIONSMNT="-o user=$USERNAME,password=$PASSWORD,workgroup=$DOMAIN"
-fi 
 
 #-----------#
 # Functions #
@@ -184,14 +179,6 @@ function listShares
     USERNAME=$2
     PASSWORD=$3
     DOMAIN=$4
-
-    if [ "$DOMAIN" == "notset" ]; then
-        if $NMB -A $HOSTSMB 2>&1 > /dev/null; then
-            DOMAIN=$($NMB -A $HOSTSMB |awk '{print $1}' |sed -n 2p)
-        else
-            DOMAIN="WORKGROUP"
-        fi
-    fi 
 
     exec 2> /dev/null # GoHorse to clean the outputs
     SHARES=$($SMB -g -L \\\\$HOSTSMB $OPTIONS |grep -i "Disk" |grep -v "print")
@@ -229,13 +216,12 @@ function scanner
 function generateTargets
 {
     > $SHARESFILE #Clean targets file
-
+        
     generateRange.rb $NETWORK |while read HOSTS 
     do
         scanner $HOSTS &
         sleep $DELAY
     done
-sleep 7
 }
 
 function searchFilesByName
@@ -270,7 +256,7 @@ function searchFilesByContent
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
 
-    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG \;
+    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
 
     
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
@@ -327,9 +313,16 @@ if [ "$NETWORK" == "notset" ];then
     exit
 fi
 
+if [ "$USERNAME" == "notset" -o $PASSWORD == "notset" ]; then
+    OPTIONS="-N"
+    OPTIONSMNT="-o user=,password="
+else
+    OPTIONS="-U $DOMAIN\\$USERNAME%$PASSWORD"
+    OPTIONSMNT="-o user=$USERNAME,password=$PASSWORD,workgroup=$DOMAIN"
+fi 
+
 checkHomeFolders
 generateTargets
-
 
 if [ -s "$SHARESFILE" ];then
     NUMBERLINESFILE=$(cat $SHARESFILE |wc -l)
@@ -342,7 +335,8 @@ if [ -s "$SHARESFILE" ];then
        echo
        cat $SHARESFILE |while read LINES
        do
-           echo -e " ( $COUNT ).... $LINES"
+           SMBLINE=$(echo $LINES |awk -F"," '{print "smb://"$1"/"$2}')
+           echo -e " ( $COUNT ).... $SMBLINE"
            COUNT=$(($COUNT + 1))
        done
        echo -e "$DEFAULTCOLOR ( a ).... Look for files in all targets"
@@ -361,15 +355,18 @@ if [ -s "$SHARESFILE" ];then
                TARGETHOST=$(awk "NR==$T" $SHARESFILE|awk -F"," '{print $1}')
                TARGETPATH=$(awk "NR==$T" $SHARESFILE|awk -F"," '{print $2}')
                mountTarget $TARGETHOST $TARGETPATH
+           
                if [ $ONLY == "notset" -o $ONLY == "filenames" ];then
                    searchFilesByName $TARGETHOST $TARGETPATH
                fi
+
                if [ $ONLY == "notset" -o $ONLY == "contents" ];then
                    searchFilesByContent $TARGETHOST $TARGETPATH
-                   if [ $YARA != "notset" ]; then
-                       searchFilesWithYara $YARAFILE
-                   fi
-               fi 
+               fi
+               
+               if [ $ONLY == "yara" -a $YARAFILE != "notset" ] ; then
+                   searchFilesWithYara $YARAFILE
+               fi
                umountTarget
            done
            continue
@@ -385,15 +382,18 @@ if [ -s "$SHARESFILE" ];then
            TARGETHOST=$(awk "NR==$OPT" $SHARESFILE|awk -F"," '{print $1}')
            TARGETPATH=$(awk "NR==$OPT" $SHARESFILE|awk -F"," '{print $2}')
            mountTarget $TARGETHOST $TARGETPATH
+           
            if [ $ONLY == "notset" -o $ONLY == "filenames" ];then
                searchFilesByName $TARGETHOST $TARGETPATH
            fi
+           
            if [ $ONLY == "notset" -o $ONLY == "contents" ];then
-               searchFilesByContent $TARGETHOST $TARGETPATH
-                   if [ $YARAFILE != "notset" ]; then
-                       searchFilesWithYara $YARAFILE
-                   fi
-           fi 
+               searchFilesByContent $TARGETHOST $TARGETPATH           
+           fi
+           
+           if [ $ONLY == "yara" -a $YARAFILE != "notset" ] ; then
+               searchFilesWithYara $YARAFILE
+           fi         
            umountTarget
            trap 2
            continue
