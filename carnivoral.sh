@@ -3,7 +3,7 @@
 #Title           :carnivoral.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/02/04
+#Date            :2018/02/12
 #Version         :0.5.3    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
