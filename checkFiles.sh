@@ -28,7 +28,6 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 
-
 shopt -s nocasematch
 
 for WORDPATTERN in $PATTERNMATCH
