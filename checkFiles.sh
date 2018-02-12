@@ -1,6 +1,6 @@
 #!/bin/bash
 #=========================================================================
-#Title           :carnivoral.sh
+#Title           :checkFiles.sh
 #Description     :Script to scan files looking for sensitive information.
 #Authors         :L0stControl and BFlag
 #Date            :2018/02/12
