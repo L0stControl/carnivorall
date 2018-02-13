@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.5.4    
+#Version         :0.5.5    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -206,7 +206,7 @@ function scanner
         PATHSMB=$(echo $i |awk -F"|" '{print $2}')
         READABLE=$(checkReadableShare $HOSTS $PATHSMB |tail -n1)
         if [ "$READABLE" == "True" ];then 
-            printf "%-45s %-20s \n" " [+] smb:\\\\$HOSTS\\$PATHSMB\\" "| READ |"
+            printf "%-45s %-20s \n" " [+] smb://$HOSTS/$PATHSMB/" "| READ |"
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
     done
@@ -229,7 +229,7 @@ function searchFilesByName
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious filenames on smb:\\\\\\$HOSTSMB\\\\$PATHSMB"
+    echo -e "$WHITE [+] Looking for suspicious filenames on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB 2>&1 > /dev/null
@@ -250,7 +250,7 @@ function searchFilesByContent
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious content files on smb:\\\\\\$HOSTSMB\\\\$PATHSMB"
+    echo -e "$WHITE [+] Looking for suspicious content files on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
@@ -296,7 +296,7 @@ function mountTarget
 function searchFilesWithYara
 {
     JUICE=$1
-    echo -e "$GREEN [+]$WHITE Searching sensitive information with Yara smb:\\\\\\$HOSTSMB\\\\$PATHSMB $DEFAULTCOLOR"
+    echo -e "$GREEN [+]$WHITE Searching sensitive information with Yara smb://$HOSTSMB/$PATHSMB $DEFAULTCOLOR"
     echo
     $YARA -r $JUICE $MOUNTPOINT |tee -a $LOG
 }
