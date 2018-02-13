@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
 #Date            :2018/02/04
-#Version         :0.5.5    
+#Version         :0.5.6    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -199,7 +199,7 @@ function checkReadableShare
 function scanner
 {
     HOSTS=$1
-    echo 1 > /dev/shm/hold
+    echo 1 > /dev/shm/hold # Using shared memory to avoid sync problems
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
@@ -210,13 +210,13 @@ function scanner
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
     done
-    echo 0 > /dev/shm/hold
+    echo 0 > /dev/shm/hold # Using shared memory to avoid sync problems
     SHARES=""
 }
 
 function generateTargets
 {
-    > $SHARESFILE #Clean targets file
+    > $SHARESFILE # Clean targets file
     readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
     for HOSTS in "${IPS[@]}"
     do
