@@ -3,8 +3,8 @@
 #Title           :carnivoral.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/02/12
-#Version         :0.5.3    
+#Date            :2018/02/04
+#Version         :0.5.4    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -179,7 +179,6 @@ function listShares
     USERNAME=$2
     PASSWORD=$3
     DOMAIN=$4
-
     exec 2> /dev/null # GoHorse to clean the outputs
     SHARES=$($SMB -g -L \\\\$HOSTSMB $OPTIONS |grep -i "Disk" |grep -v "print")
     SHARES=$(echo $SHARES |grep -i "Disk")
@@ -200,6 +199,7 @@ function checkReadableShare
 function scanner
 {
     HOSTS=$1
+    echo 1 > /dev/shm/hold
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
@@ -210,14 +210,15 @@ function scanner
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
     done
+    echo 0 > /dev/shm/hold
     SHARES=""
 }
 
 function generateTargets
 {
     > $SHARESFILE #Clean targets file
-        
-    generateRange.rb $NETWORK |while read HOSTS 
+    readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
+    for HOSTS in "${IPS[@]}"
     do
         scanner $HOSTS &
         sleep $DELAY
@@ -258,12 +259,10 @@ function searchFilesByContent
 
     find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
 
-    
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
     echo
-   
 }
 
 function umountTarget
@@ -281,17 +280,17 @@ function exitScan
 
 function mountTarget
 {
-HOSTSMB=$1
-PATHSMB=$2
-if [ $(id -u) -ne 0 ];then
-    echo
-    echo -e "$RED  You must be root to use this options =( $DEFAULTCOLOR"
-    echo
-    exit
-else
-    $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
-    trap exitScan 2 # Disable Ctrl-C   
-fi    
+    HOSTSMB=$1
+    PATHSMB=$2
+    if [ $(id -u) -ne 0 ];then
+        echo
+        echo -e "$RED  You must be root to use this options =( $DEFAULTCOLOR"
+        echo
+        exit
+    else
+        $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
+        trap exitScan 2 # Disable Ctrl-C   
+    fi    
 }
 
 function searchFilesWithYara
@@ -323,6 +322,11 @@ fi
 
 checkHomeFolders
 generateTargets
+
+while [ $(</dev/shm/hold) -eq 1 ]
+do
+    sleep 1
+done
 
 if [ -s "$SHARESFILE" ];then
     NUMBERLINESFILE=$(cat $SHARESFILE |wc -l)
