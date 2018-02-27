@@ -4,7 +4,7 @@
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
 #Date            :2018/02/12
-#Version         :0.5.6    
+#Version         :0.5.7    
 #Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
 #=========================================================================
 
@@ -30,15 +30,16 @@ function banner {
     ========================================================================================             
                 --=={ Looking for sensitive information on local network }==--                                  
 
-    Usage: ./carnivoral.rb [options]
+    Usage: ./carnivoral.sh [options]
     
         -n, --network <CIDR>                   192.168.0.0/24
-        -d, --domain <domain>                  Domain network
+        -d, --domain <domain>                  Domain Network
         -u, --username <guest>                 Domain Username 
-        -p, --password <guest>                 Domain Username
+        -p, --password <guest>                 Domain password
         -o, --only <contents|filenames|yara>   Search ONLY by sensitve contents, filenames or yara rules
         -m, --match "user passw senha"         Strings to match inside files
         -y, --yara <juicy_files.txt>           Enable Yara search patterns
+        -e, --emails <y|n>                     Download all \"*.pst\" files (Prompt by default) 
         -D, --delay <Number>                   Delay between requests  
         -h, --help                             Display options
         
@@ -99,6 +100,11 @@ case $KEY in
     shift # past argument
     shift # past value
     ;;
+    -e|--emails)
+    EMAILS="$2"
+    shift # past argument
+    shift # past value
+    ;;
     -o|--only)
     ONLY="$2"
     shift # past argument
@@ -127,6 +133,7 @@ PASSWORD="${PASSWORD:=notset}"
 YARAFILE="${YARAFILE:=notset}"
 ONLY="${ONLY:=notset}"
 DELAY="${DELAY:=0.2}"
+EMAILS="${EMAILS:=0}"
 PATTERNMATCH="${PATTERNMATCH:=senha passw}"
 PIDCARNIVORAL=$$
 MOUNTPOINT=~/.carnivoral/mnt
@@ -199,7 +206,7 @@ function checkReadableShare
 function scanner
 {
     HOSTS=$1
-    echo 1 > /dev/shm/hold # Using shared memory to avoid sync problems
+    echo 1 > /dev/shm/holdcarnivoral # Using shared memory to avoid sync problems
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
@@ -210,7 +217,7 @@ function scanner
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
     done
-    echo 0 > /dev/shm/hold # Using shared memory to avoid sync problems
+    echo 0 > /dev/shm/holdcarnivoral # Using shared memory to avoid sync problems
     SHARES=""
 }
 
@@ -256,7 +263,7 @@ function searchFilesByContent
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
-
+  
     find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
@@ -320,10 +327,19 @@ else
     OPTIONSMNT="-o user=$USERNAME,password=$PASSWORD,workgroup=$DOMAIN"
 fi 
 
+if [ "$EMAILS" == "y" ];then
+    echo 1 > /tmp/pstdefault
+    elif [ "$EMAILS" == "n" ];then
+    echo 2 > /tmp/pstdefault
+    else
+    echo 0 > /tmp/pstdefault
+fi
+
+
 checkHomeFolders
 generateTargets
 
-while [ $(</dev/shm/hold) -eq 1 ]
+while [ $(</dev/shm/holdcarnivoral) -eq 1 ]
 do
     sleep 1
 done
