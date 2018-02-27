@@ -12,9 +12,9 @@
     ░ ░            ░  ░   ░              ░  ░        ░      ░ ░     ░           ░  ░    ░  ░  
     ░                                                                                       
       
-    ========================================================================================             
-                --=={ Looking for sensitive information on local network }==--                                  
-
+    ======================================================================================== 
+                --=={ Looking for sensitive information on local network }==-- 
+                
 Scan internal network looking for files with credentials and sensitive information on SMB shares.
 
 Requirements:
