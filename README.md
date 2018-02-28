@@ -20,7 +20,7 @@ Scan internal network looking for files with credentials and sensitive informati
 Requirements:
 
 - smbclient 
-- xpdf-utils
+- GhostScript
 - zip
 - ruby
 - yara (only to use -y option)
