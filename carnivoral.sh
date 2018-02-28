@@ -3,9 +3,9 @@
 #Title           :carnivoral.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/02/27
-#Version         :0.5.7    
-#Dependecies     :smbclient / xpdf-utils / zip / ruby / yara 
+#Date            :2018/02/28
+#Version         :0.5.8    
+#Dependecies     :smbclient / ghostscript / zip / ruby / yara 
 #=========================================================================
 
 SCRIPTHOME=$(readlink -f "$0" | rev | cut -d '/' -f 2- | rev)
@@ -33,8 +33,9 @@ function banner {
     Usage: ./carnivoral.sh [options]
     
         -n, --network <CIDR>                   192.168.0.0/24
-        -d, --domain <domain>                  Domain Network
-        -u, --username <guest>                 Domain Username 
+        -l, --list <inputfilename>             List of hosts/networks
+        -d, --domain <domain>                  Domain network
+        -u, --username <guest>                 Domain username 
         -p, --password <guest>                 Domain password
         -o, --only <contents|filenames|yara>   Search ONLY by sensitve contents, filenames or yara rules
         -m, --match "user passw senha"         Strings to match inside files
@@ -105,6 +106,11 @@ case $KEY in
     shift # past argument
     shift # past value
     ;;
+    -l|--list)
+    LIST="$2"
+    shift # past argument
+    shift # past value
+    ;;
     -o|--only)
     ONLY="$2"
     shift # past argument
@@ -127,6 +133,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 #-------------------------#
 
 NETWORK="${NETWORK:=notset}"
+LIST="${LIST:=notset}"
 DOMAIN="${DOMAIN:=notset}"
 USERNAME="${USERNAME:=notset}"
 PASSWORD="${PASSWORD:=notset}"
@@ -224,12 +231,21 @@ function scanner
 function generateTargets
 {
     > $SHARESFILE # Clean targets file
-    readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
-    for HOSTS in "${IPS[@]}"
-    do
-        scanner $HOSTS &
-        sleep $DELAY
-    done
+    if [ "$LIST" != "notset" ]; then
+        readarray -t IPS_FILE <<< "$(cat $LIST | while read LINE ; do generateRange.rb $LINE; done)"
+        for HOSTS in "${IPS_FILE[@]}"
+            do
+                scanner $HOSTS &
+                sleep $DELAY
+            done 
+    else
+        readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
+        for HOSTS in "${IPS[@]}"
+        do
+            scanner $HOSTS &
+            sleep $DELAY
+        done
+    fi   
 }
 
 function searchFilesByName
@@ -312,10 +328,17 @@ function searchFilesWithYara
 # main #
 #------#
 
-if [ "$NETWORK" == "notset" ];then
-    echo
-    echo -e "$RED  You need to inform the network =( $DEFAULTCOLOR"
+if [ "$NETWORK" == "notset" -a "$LIST" == "notset" ];then
     banner
+    echo
+    echo -e "$RED ERROR: $YELLOW You need to inform the network =( $DEFAULTCOLOR"
+    echo
+    exit
+elif [ "$LIST" != "notset" -a ! -e "$LIST" ];then
+    banner
+    echo
+    echo -e "$RED ERROR: $YELLOW File does not exist =( $DEFAULTCOLOR"
+    echo
     exit
 fi
 
@@ -335,7 +358,6 @@ if [ "$EMAILS" == "y" ];then
     echo 0 > /tmp/pstdefault
 fi
 
-
 checkHomeFolders
 generateTargets
 
@@ -350,8 +372,8 @@ if [ -s "$SHARESFILE" ];then
     while :
     do
        echo
-       echo -e "$RED Choose your option $WHITE"
-       
+       echo -e "$YELLOW Choose your option $WHITE"
+       echo 0 > /tmp/pstdefault
        echo
        cat $SHARESFILE |while read LINES
        do
@@ -396,6 +418,7 @@ if [ -s "$SHARESFILE" ];then
            ;;
        "r")
            generateTargets
+           sleep 3
            ;;
        *)
            dateLog
