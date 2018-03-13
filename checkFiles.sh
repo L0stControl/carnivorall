@@ -149,7 +149,6 @@ done
 
 if [[ ${FILENAME: -4} =~ ".PST" ]]; then
     pstFiles
-    sleep 2
 fi
 
 rm -rf $TMPDIR
