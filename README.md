@@ -15,13 +15,13 @@
     ======================================================================================== 
                 --=={ Looking for sensitive information on local network }==-- 
                 
-Authors: L0stControl and BFlag
+# Authors: L0stControl and BFlag
 
-Intro
+# Intro
 
 Scan internal network looking for files with sensitive information on SMB shares. 
 
-Usage
+# Usage
 
     Usage: ./carnivoral.sh [options]
     
@@ -43,7 +43,7 @@ Usage
         Ex3: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt
 
 
-Requirements:
+# Requirements:
 
 - smbclient 
 - GhostScript
