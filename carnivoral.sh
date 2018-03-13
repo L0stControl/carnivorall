@@ -314,7 +314,6 @@ function searchFilesByRegex
     echo
 }
 
-
 function umountTarget
 {
     $UMNT -l -f $MOUNTPOINT
