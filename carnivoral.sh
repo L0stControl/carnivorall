@@ -3,8 +3,8 @@
 #Title           :carnivoral.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/02/28
-#Version         :0.5.8    
+#Date            :2018/03/13
+#Version         :0.5.9    
 #Dependecies     :smbclient / ghostscript / zip / ruby / yara 
 #=========================================================================
 
@@ -32,17 +32,18 @@ function banner {
 
     Usage: ./carnivoral.sh [options]
     
-        -n, --network <CIDR>                   192.168.0.0/24
-        -l, --list <inputfilename>             List of hosts/networks
-        -d, --domain <domain>                  Domain network
-        -u, --username <guest>                 Domain username 
-        -p, --password <guest>                 Domain password
-        -o, --only <contents|filenames|yara>   Search ONLY by sensitve contents, filenames or yara rules
-        -m, --match "user passw senha"         Strings to match inside files
-        -y, --yara <juicy_files.txt>           Enable Yara search patterns
-        -e, --emails <y|n>                     Download all \"*.pst\" files (Prompt by default) 
-        -D, --delay <Number>                   Delay between requests  
-        -h, --help                             Display options
+        -n, --network <CIDR>                        192.168.0.0/24
+        -l, --list <inputfilename>                  List of hosts/networks
+        -d, --domain <domain>                       Domain network
+        -u, --username <guest>                      Domain username 
+        -p, --password <guest>                      Domain password
+        -o, --only <contents|filenames|yara|regex>  Search ONLY by sensitve contents, filenames or yara rules
+        -m, --match "user passw senha"              Strings to match inside files (not default)
+        -r, --regex "4[0-9]{12}[0-9]?{3}"           Search contents using REGEX
+        -y, --yara <juicy_files.txt>                Enable Yara search patterns (not default)
+        -e, --emails <y|n>                          Download all \"*.pst\" files (Prompt by default) 
+        -D, --delay <Number>                        Delay between requests  
+        -h, --help                                  Display options
         
         Ex1: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
         Ex2: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
@@ -68,59 +69,64 @@ KEY="$1"
 case $KEY in
     -n|--network)
     NETWORK="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -d|--domain)
     DOMAIN="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -u|--username)
     USERNAME="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -p|--password)
     PASSWORD="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -D|--delay)
     DELAY="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -m|--match)
     PATTERNMATCH="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
+    ;;
+    -r|--regex)
+    REGEX="$2"
+    shift 
+    shift 
     ;;
     -y|--yara)
     YARAFILE="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -e|--emails)
     EMAILS="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -l|--list)
     LIST="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     -o|--only)
     ONLY="$2"
-    shift # past argument
-    shift # past value
+    shift 
+    shift 
     ;;
     --default)
     DEFAULT=YES
-    shift # past argument
+    shift 
     ;;
-    *)    # unknown option
+    *)    
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
     ;;
@@ -141,6 +147,7 @@ YARAFILE="${YARAFILE:=notset}"
 ONLY="${ONLY:=notset}"
 DELAY="${DELAY:=0.2}"
 EMAILS="${EMAILS:=0}"
+REGEX="${REGEX:=notset}"
 PATTERNMATCH="${PATTERNMATCH:=senha passw}"
 PIDCARNIVORAL=$$
 MOUNTPOINT=~/.carnivoral/mnt
@@ -288,6 +295,26 @@ function searchFilesByContent
     echo
 }
 
+function searchFilesByRegex
+{
+    HOSTSMB=$1
+    PATHSMB=$2
+    echo -e "$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on smb://$HOSTSMB/$PATHSMB"
+    echo -e "$DEFAULTCOLOR"
+    if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
+    fi
+    
+    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
+
+    if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
+        rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
+    fi
+    echo
+}
+
+
 function umountTarget
 {
     $UMNT -l -f $MOUNTPOINT
@@ -382,6 +409,7 @@ if [ -s "$SHARESFILE" ];then
            COUNT=$(($COUNT + 1))
        done
        echo -e "$DEFAULTCOLOR ( a ).... Look for files in all targets"
+       echo -e "$DEFAULTCOLOR ( c ).... Change pattern match(es) string(s), now = $RED[$PATTERNMATCH]$DEFAULTCOLOR"
        echo -e "$DEFAULTCOLOR ( r ).... Rescan target(s)"       
        echo -e " ( q ).... Quit" 
        echo
@@ -398,23 +426,32 @@ if [ -s "$SHARESFILE" ];then
                TARGETPATH=$(awk "NR==$T" $SHARESFILE|awk -F"," '{print $2}')
                mountTarget $TARGETHOST $TARGETPATH
            
-               if [ $ONLY == "notset" -o $ONLY == "filenames" ];then
+               if [ $ONLY == "notset" -o $ONLY == "filenames" -o $REGEX == "notset" ];then
                    searchFilesByName $TARGETHOST $TARGETPATH
                fi
 
-               if [ $ONLY == "notset" -o $ONLY == "contents" ];then
+               if [ $ONLY == "notset" -o $ONLY == "contents" -o $REGEX == "notset" ];then
                    searchFilesByContent $TARGETHOST $TARGETPATH
                fi
                
-               if [ $ONLY == "yara" -a $YARAFILE != "notset" ] ; then
+               if [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $ONLY == "notset" -a $YARAFILE != "notset" \) ] ; then
                    searchFilesWithYara $YARAFILE
                fi
+    
+               if [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o  \( $ONLY == "notset" -a $REGEX != "notset" \) ] ; then
+                   searchFilesByRegex $TARGETHOST $TARGETPATH
+               fi 
                umountTarget
            done
            continue
            ;;
        "q")
            exit
+           ;;
+       "c")
+           echo -en " $YELLOW Type new pattern matches separated by spaces ...: $WHITE"
+           echo -en "$DEFAULTCOLOR"
+           read PATTERNMATCH
            ;;
        "r")
            generateTargets
@@ -426,16 +463,20 @@ if [ -s "$SHARESFILE" ];then
            TARGETPATH=$(awk "NR==$OPT" $SHARESFILE|awk -F"," '{print $2}')
            mountTarget $TARGETHOST $TARGETPATH
            
-           if [ $ONLY == "notset" -o $ONLY == "filenames" ];then
+           if [ $ONLY == "notset" -o $ONLY == "filenames" -o $REGEX == "notset" ];then
                searchFilesByName $TARGETHOST $TARGETPATH
            fi
            
-           if [ $ONLY == "notset" -o $ONLY == "contents" ];then
+           if [ $ONLY == "notset" -o $ONLY == "contents" -o $REGEX == "notset" ];then
                searchFilesByContent $TARGETHOST $TARGETPATH           
            fi
            
-           if [ $ONLY == "yara" -a $YARAFILE != "notset" ] ; then
+           if [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $ONLY == "notset" -a $YARAFILE != "notset" \) ] ; then
                searchFilesWithYara $YARAFILE
+           fi
+
+           if [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o  \( $ONLY == "notset" -a $REGEX != "notset" \) ] ; then
+               searchFilesByRegex $TARGETHOST $TARGETPATH
            fi         
            umountTarget
            trap 2
