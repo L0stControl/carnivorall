@@ -41,7 +41,7 @@ function banner {
         -m, --match "user passw senha"              Strings to match inside files (not default)
         -r, --regex "4[0-9]{12}[0-9]?{3}"           Search contents using REGEX
         -y, --yara <juicy_files.txt>                Enable Yara search patterns (not default)
-        -e, --emails <y|n>                          Download all \"*.pst\" files (Prompt by default) 
+        -e, --emails <y|n>                          Download all *.pst files (Prompt by default) 
         -D, --delay <Number>                        Delay between requests  
         -h, --help                                  Display options
         
