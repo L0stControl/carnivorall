@@ -1,10 +1,10 @@
 #!/bin/bash
 #=========================================================================
-#Title           :carnivoral.sh
+#Title           :carnivorall.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/03/13
-#Version         :0.5.9    
+#Date            :2018/03/14
+#Version         :0.6.0    
 #Dependecies     :smbclient / ghostscript / zip / ruby / yara 
 #=========================================================================
 
@@ -14,23 +14,23 @@ export PATH=$PATH:$SCRIPTHOME
 function banner {
     cat << EOF
     
-    ========================================================================================
-     
-     ▄████▄   ▄▄▄       ██▀███   ███▄    █  ██▓ ██▒   █▓ ▒█████   ██▀███   ▄▄▄       ██▓      
-    ▒██▀ ▀█  ▒████▄    ▓██ ▒ ██▒ ██ ▀█   █ ▓██▒▓██░   █▒▒██▒  ██▒▓██ ▒ ██▒▒████▄    ▓██▒      
-    ▒▓█    ▄ ▒██  ▀█▄  ▓██ ░▄█ ▒▓██  ▀█ ██▒▒██▒ ▓██  █▒░▒██░  ██▒▓██ ░▄█ ▒▒██  ▀█▄  ▒██░      
-    ▒▓▓▄ ▄██▒░██▄▄▄▄██ ▒██▀▀█▄  ▓██▒  ▐▌██▒░██░  ▒██ █░░▒██   ██░▒██▀▀█▄  ░██▄▄▄▄██ ▒██░      
-    ▒ ▓███▀ ░ ▓█   ▓██▒░██▓ ▒██▒▒██░   ▓██░░██░   ▒▀█░  ░ ████▓▒░░██▓ ▒██▒ ▓█   ▓██▒░██████▒  
-    ░ ░▒ ▒  ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░░ ▒░   ▒ ▒ ░▓     ░ ▐░  ░ ▒░▒░▒░ ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░░ ▒░▓  ░  
-      ░  ▒     ▒   ▒▒ ░  ░▒ ░ ▒░░ ░░   ░ ▒░ ▒ ░   ░ ░░    ░ ▒ ▒░   ░▒ ░ ▒░  ▒   ▒▒ ░░ ░ ▒  ░  
-    ░          ░   ▒     ░░   ░    ░   ░ ░  ▒ ░     ░░  ░ ░ ░ ▒    ░░   ░   ░   ▒     ░ ░     
-    ░ ░            ░  ░   ░              ░  ░        ░      ░ ░     ░           ░  ░    ░  ░  
-    ░                                                                                       
-      
-    ========================================================================================             
+  ================================================================================================
+
+   ▄████▄   ▄▄▄       ██▀███   ███▄    █  ██▓ ██▒   █▓ ▒█████   ██▀███   ▄▄▄       ██▓     ██▓    
+  ▒██▀ ▀█  ▒████▄    ▓██ ▒ ██▒ ██ ▀█   █ ▓██▒▓██░   █▒▒██▒  ██▒▓██ ▒ ██▒▒████▄    ▓██▒    ▓██▒    
+  ▒▓█    ▄ ▒██  ▀█▄  ▓██ ░▄█ ▒▓██  ▀█ ██▒▒██▒ ▓██  █▒░▒██░  ██▒▓██ ░▄█ ▒▒██  ▀█▄  ▒██░    ▒██░    
+  ▒▓▓▄ ▄██▒░██▄▄▄▄██ ▒██▀▀█▄  ▓██▒  ▐▌██▒░██░  ▒██ █░░▒██   ██░▒██▀▀█▄  ░██▄▄▄▄██ ▒██░    ▒██░    
+  ▒ ▓███▀ ░ ▓█   ▓██▒░██▓ ▒██▒▒██░   ▓██░░██░   ▒▀█░  ░ ████▓▒░░██▓ ▒██▒ ▓█   ▓██▒░██████▒░██████▒
+  ░ ░▒ ▒  ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░░ ▒░   ▒ ▒ ░▓     ░ ▐░  ░ ▒░▒░▒░ ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░░ ▒░▓  ░░ ▒░▓  ░
+    ░  ▒     ▒   ▒▒ ░  ░▒ ░ ▒░░ ░░   ░ ▒░ ▒ ░   ░ ░░    ░ ▒ ▒░   ░▒ ░ ▒░  ▒   ▒▒ ░░ ░ ▒  ░░ ░ ▒  ░
+  ░          ░   ▒     ░░   ░    ░   ░ ░  ▒ ░     ░░  ░ ░ ░ ▒    ░░   ░   ░   ▒     ░ ░     ░ ░   
+  ░ ░            ░  ░   ░              ░  ░        ░      ░ ░     ░           ░  ░    ░  ░    ░  ░
+  ░                                               ░                                               
+
+  ================================================================================================             
                 --=={ Looking for sensitive information on local network }==--                                  
 
-    Usage: ./carnivoral.sh [options]
+    Usage: ./carnivorall.sh [options]
     
         -n, --network <CIDR>                        192.168.0.0/24
         -l, --list <inputfilename>                  List of hosts/networks
@@ -45,9 +45,9 @@ function banner {
         -D, --delay <Number>                        Delay between requests  
         -h, --help                                  Display options
         
-        Ex1: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
-        Ex2: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
-        Ex3: ./carnivoral -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt 
+        Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
+        Ex2: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
+        Ex3: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt 
 
 EOF
 }
@@ -149,15 +149,15 @@ DELAY="${DELAY:=0.2}"
 EMAILS="${EMAILS:=0}"
 REGEX="${REGEX:=notset}"
 PATTERNMATCH="${PATTERNMATCH:=senha passw}"
-PIDCARNIVORAL=$$
-MOUNTPOINT=~/.carnivoral/mnt
-SHARESFILE=~/.carnivoral/shares.txt
-FILESFOLDER=~/.carnivoral/files
+PIDCARNIVORALL=$$
+MOUNTPOINT=~/.carnivorall/mnt
+SHARESFILE=~/.carnivorall/shares.txt
+FILESFOLDER=~/.carnivorall/files
 SMB=$(whereis smbclient |awk '{print $2}')
 MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
-LOG=~/.carnivoral/log
+LOG=~/.carnivorall/log
 SHARES=""
 DEFAULTCOLOR="\033[0m"
 BLACK="\033[0;30m"
@@ -175,8 +175,8 @@ EXITCTRL=0
 
 function checkHomeFolders
 {
-    if [ ! -d ~/.carnivoral ]; then
-        mkdir -p ~/.carnivoral 
+    if [ ! -d ~/.carnivorall ]; then
+        mkdir -p ~/.carnivorall 
         mkdir -p $FILESFOLDER 
         mkdir -p $MOUNTPOINT 
         touch $SHARESFILE 
@@ -220,7 +220,7 @@ function checkReadableShare
 function scanner
 {
     HOSTS=$1
-    echo 1 > /dev/shm/holdcarnivoral # Using shared memory to avoid sync problems
+    echo 1 > /dev/shm/holdcarnivorall # Using shared memory to avoid sync problems
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
@@ -231,7 +231,7 @@ function scanner
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
     done
-    echo 0 > /dev/shm/holdcarnivoral # Using shared memory to avoid sync problems
+    echo 0 > /dev/shm/holdcarnivorall # Using shared memory to avoid sync problems
     SHARES=""
 }
 
@@ -324,7 +324,7 @@ function exitScan
 {
     echo -e "$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
     umountTarget
-    kill -9 $PIDCARNIVORAL     
+    kill -9 $PIDCARNIVORALL     
 }
 
 function mountTarget
@@ -387,7 +387,7 @@ fi
 checkHomeFolders
 generateTargets
 
-while [ $(</dev/shm/holdcarnivoral) -eq 1 ]
+while [ $(</dev/shm/holdcarnivorall) -eq 1 ]
 do
     sleep 1
 done
