@@ -104,3 +104,9 @@ Scan internal network looking for files with sensitive information on SMB shares
                             %((((((((((((((((((((((((((((((%                             
 ,.,.,.,,                    /%%%%#((((((((((((((((((((((#%%%              
  ```      
+
+Special thanks to:
+
+https://github.com/DiabloHorn/yara4pentesters
+
+Awesome project =)
