@@ -44,7 +44,7 @@ Scan internal network looking for files with sensitive information on SMB shares
 
 # Requirements:
 
-- smbclient 
+- cifs-utils 
 - GhostScript
 - zip
 - ruby
