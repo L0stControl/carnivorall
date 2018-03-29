@@ -1,12 +1,12 @@
 #!/bin/bash
-#=========================================================================
+#==============================================================================================
 #Title           :carnivorall.sh
 #Description     :Look for sensitive information on the internal network.
 #Authors         :L0stControl and BFlag
-#Date            :2018/03/14
-#Version         :0.6.0    
-#Dependecies     :smbclient / ghostscript / zip / ruby / yara 
-#=========================================================================
+#Date            :2018/03/29
+#Version         :0.6.1    
+#Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize ) / yara 
+#==============================================================================================
 
 SCRIPTHOME=$(readlink -f "$0" | rev | cut -d '/' -f 2- | rev)
 export PATH=$PATH:$SCRIPTHOME
@@ -44,6 +44,8 @@ function banner {
         -e, --emails <y|n>                          Download all *.pst files (Prompt by default) 
         -D, --delay <Number>                        Delay between requests  
         -h, --help                                  Display options
+        -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" will search only in local files)
+        -w, --website "domain.com"                  Website used at *-g/--google* feature
         
         Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
         Ex2: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
@@ -107,6 +109,16 @@ case $KEY in
     shift 
     shift 
     ;;
+    -g|--google)
+    GOOGLE="$2"
+    shift 
+    shift 
+    ;;
+    -w|--website)
+    WEBSITE="$2"
+    shift 
+    shift 
+    ;;
     -e|--emails)
     EMAILS="$2"
     shift 
@@ -150,6 +162,8 @@ EMAILS="${EMAILS:=0}"
 REGEX="${REGEX:=notset}"
 PATTERNMATCH="${PATTERNMATCH:=senha passw}"
 PIDCARNIVORALL=$$
+GOOGLE="${GOOGLE:=notset}"
+WEBSITE="${WEBSITE:=notset}"
 MOUNTPOINT=~/.carnivorall/mnt
 SHARESFILE=~/.carnivorall/shares.txt
 FILESFOLDER=~/.carnivorall/files
@@ -280,14 +294,14 @@ function searchFilesByContent
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious content files on smb://$HOSTSMB/$PATHSMB"
+    echo -e "$WHITE [+] Looking for suspicious content files"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
   
-    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
+    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB/{} $MOUNTPOINT \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
@@ -306,7 +320,7 @@ function searchFilesByRegex
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
     
-    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG $MOUNTPOINT $HOSTSMB $PATHSMB \;
+    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
@@ -350,11 +364,26 @@ function searchFilesWithYara
     $YARA -r $JUICE $MOUNTPOINT |tee -a $LOG
 }
 
+function searchFilesWithGoogle
+{
+    if [ ! -d $FILESFOLDER/$WEBSITE ]; then
+        mkdir -p $FILESFOLDER/$WEBSITE/downloads
+        mkdir -p $FILESFOLDER/$WEBSITE/tmp
+    fi
+
+    scraping.rb $WEBSITE $GOOGLE $FILESFOLDER/$WEBSITE/downloads
+
+    echo -e "$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE"
+    echo -e "$DEFAULTCOLOR"
+
+    find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp $FILESFOLDER/$WEBSITE/ $LOG /{} \;
+}
+
 #------#
 # main #
 #------#
 
-if [ "$NETWORK" == "notset" -a "$LIST" == "notset" ];then
+if [ "$NETWORK" == "notset" -a "$LIST" == "notset" -a "$GOOGLE" == "notset" ];then
     banner
     echo
     echo -e "$RED ERROR: $YELLOW You need to inform the network =( $DEFAULTCOLOR"
@@ -364,6 +393,13 @@ elif [ "$LIST" != "notset" -a ! -e "$LIST" ];then
     banner
     echo
     echo -e "$RED ERROR: $YELLOW File does not exist =( $DEFAULTCOLOR"
+    echo
+    exit
+elif [ "$GOOGLE" != "notset" -a "$WEBSITE" == "notset" ]; then
+    banner
+    echo
+    echo -e "$RED ERROR: $YELLOW You need to inform the website =( $DEFAULTCOLOR"
+    echo -e "        $YELLOW Sintax example:$GREEN carnivorall -g 100 -w example.com $DEFAULTCOLOR"
     echo
     exit
 fi
@@ -378,14 +414,20 @@ fi
 
 if [ "$EMAILS" == "y" ];then
     echo 1 > /tmp/pstdefault
+    chmod 777 /tmp/pstdefault
     elif [ "$EMAILS" == "n" ];then
     echo 2 > /tmp/pstdefault
     else
     echo 0 > /tmp/pstdefault
 fi
 
-checkHomeFolders
-generateTargets
+if [ $GOOGLE == "notset" ]; then
+    checkHomeFolders
+    generateTargets
+else
+    searchFilesWithGoogle
+    exit
+fi
 
 while [ $(</dev/shm/holdcarnivorall) -eq 1 ]
 do
