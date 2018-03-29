@@ -14,7 +14,6 @@ UNZIP=$(whereis unzip |awk '{print $2}')
 GS=$(whereis gs |awk '{print $2}')
 DSTFOLDER=$4
 LOG=$5
-#FILENAMEMSG=$(echo $FILENAME |sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
 MOUNTPOINT=$7
 FILENAMEMSG=$(echo $6 |sed -e 's,'"$MOUNTPOINT\/"',,')
 DEFAULTCOLOR="\033[0m"
