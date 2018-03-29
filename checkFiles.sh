@@ -3,8 +3,8 @@
 #Title           :checkFiles.sh
 #Description     :Script to scan files looking for sensitive information.
 #Authors         :L0stControl and BFlag
-#Date            :2018/02/28
-#Version         :0.1.4    
+#Date            :2018/03/29
+#Version         :0.1.5    
 #=========================================================================
 
 FILENAME=$1
@@ -14,10 +14,9 @@ UNZIP=$(whereis unzip |awk '{print $2}')
 GS=$(whereis gs |awk '{print $2}')
 DSTFOLDER=$4
 LOG=$5
-MOUNTPOINT=$6
-HOSTSMB=$7
-PATHSMB=$8
-FILENAMEMSG=$(echo $FILENAME |sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
+#FILENAMEMSG=$(echo $FILENAME |sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
+MOUNTPOINT=$7
+FILENAMEMSG=$(echo $6 |sed -e 's,'"$MOUNTPOINT\/"',,')
 DEFAULTCOLOR="\033[0m"
 BLACK="\033[0;30m"
 RED="\033[0;31m"
@@ -50,22 +49,22 @@ function cpFiles
 function officeNew
 {
     $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
-    if grep -i -R "$WORDPATTERN" $TMPDIR/* > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( grep -i -R " $WORDPATTERN" $TMPDIR/* ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
 
 function officeOld
 {
-    if grep -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( grep -i -a " $WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi    
 }
 
 function plainTextFiles
 {
-    if grep -i -a "$WORDPATTERN" "$FILENAME" > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( grep -i -a " $WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
 
@@ -87,7 +86,7 @@ function pstFiles
         
         case $OPT2 in
         "d")
-            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  smb://$FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
             exit
             ;;
         "s")
@@ -95,7 +94,7 @@ function pstFiles
             ;;
         "a")
             setPstDefault 1
-            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  smb://$FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
             ;;
         "n")
             setPstDefault 2
@@ -107,7 +106,7 @@ function pstFiles
         esac 
     elif [[ $DEFAULTPST -eq 1 ]]; then
         
-        cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  smb://$FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+        cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
     
     elif [[ $DEFAULTPST -eq 2 ]]; then
     
@@ -132,15 +131,15 @@ for WORDPATTERN in $PATTERNMATCH
 
             plainTextFiles
         
-        elif [[ ${FILENAME: -4} =~ ".CNF" ]] || [[ ${FILENAME: -5} =~ ".XML" ]] || [[ ${FILENAME: -4} =~ ".CSV" ]] ;then
+        elif [[ ${FILENAME: -4} =~ ".CNF" ]] || [[ ${FILENAME: -4} =~ ".XML" ]] || [[ ${FILENAME: -4} =~ ".LOG" ]] ;then
 
             plainTextFiles
 
         elif [[ ${FILENAME: -4} =~ ".PDF" ]];then 
 
-            if $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | grep -i "$WORDPATTERN" > /dev/null 2>&1 ; then
+            if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | grep -i " $WORDPATTERN" ) > /dev/null 2>&1 ; then
             
-                cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+                cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
 
             fi
             
@@ -149,6 +148,12 @@ done
 
 if [[ ${FILENAME: -4} =~ ".PST" ]]; then
     pstFiles
+fi
+
+if [[ ${FILENAME: -4} =~ ".KEY" ]] || [[ ${FILENAME: -4} =~ ".PCF" ]] || [[ ${FILENAME: -5} =~ ".OVPN" ]] ;then
+
+    cpFiles "$GREEN [+]$WHITE - Possible [$RED VPN CONF / KEY $WHITE] $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+
 fi
 
 rm -rf $TMPDIR
