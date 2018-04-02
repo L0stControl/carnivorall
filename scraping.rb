@@ -26,9 +26,7 @@ if ARGV[1].to_i > 100
     end	
 
 else
-
-	 qtSearch = 1
-
+    qtSearch = 1
 end
 
 if ARGV[1].to_i < 100
