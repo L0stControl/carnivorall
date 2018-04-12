@@ -37,7 +37,8 @@ Scan internal network looking for files with sensitive information on SMB shares
         -D, --delay <Number>                        Delay between requests
        -lD, --localfolder /path/                    For search sensitive information in local files  
         -h, --help                                  Display options
-        -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
+        -g, --google <max items>                    Search files on the website using Google 
+                                                    (Obs: Set to "0" to search in local files)
         -w, --website "domain.com"                  Website used at *-g/--google* feature
         
         Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
@@ -50,7 +51,8 @@ Scan internal network looking for files with sensitive information on SMB shares
         -lP, --lport 80                              Local port to listen
         -pP, --pspayload <payload.ps1>               Powershell payload file
 
-        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
+        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 
+             -pP ./payload.ps1 -lP 80 
 
 # Requirements:
 
