@@ -29,7 +29,8 @@ Scan internal network looking for files with sensitive information on SMB shares
         -d, --domain <domain>                       Domain network
         -u, --username <guest>                      Domain username 
         -p, --password <guest>                      Domain password
-        -o, --only <contents|filenames|yara|regex>  Search ONLY by sensitve contents, filenames or yara rules
+        -o, --only <contents|filenames|yara|regex>  Search ONLY by sensitve contents, filenames or yara 
+                                                    rules
         -m, --match "user passw senha"              Strings to match inside files (not default)
         -r, --regex "4[0-9]{12}[0-9]?{3}"           Search contents using REGEX
         -y, --yara <juicy_files.txt>                Enable Yara search patterns (not default)
