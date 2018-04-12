@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 #=========================================================================
-#Title           :scraping.rb
-#Description     :Get files from the internet using search engines
-#Authors         :L0stControl
-#Date            :2018/04/02
-#Version         :0.1.1    
-#Dependecies     :nokogiri / HTTParty / colorize
+# Title           :scraping.rb
+# Description     :Get files from the internet using search engines
+# Authors         :L0stControl
+# Date            :2018/04/02
+# Version         :0.1.1    
+# Dependecies     :ruby gems - nokogiri / HTTParty / colorize
 #=========================================================================
 
 require 'nokogiri'
