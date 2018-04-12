@@ -22,7 +22,7 @@ Scan internal network looking for files with sensitive information on SMB shares
 
 # Usage
 
-    Usage: ./carnivorall.sh [options]
+        Usage: ./carnivorall.sh [options]
     
         -n, --network <CIDR>                        192.168.0.0/24
         -l, --list <inputfilename>                  List of hosts/networks
@@ -34,14 +34,23 @@ Scan internal network looking for files with sensitive information on SMB shares
         -r, --regex "4[0-9]{12}[0-9]?{3}"           Search contents using REGEX
         -y, --yara <juicy_files.txt>                Enable Yara search patterns (not default)
         -e, --emails <y|n>                          Download all *.pst files (Prompt by default) 
-        -D, --delay <Number>                        Delay between requests  
+        -D, --delay <Number>                        Delay between requests
+       -lD, --localfolder /path/                    For search sensitive information in local files  
         -h, --help                                  Display options
-        -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" will search only in local files)
+        -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
         -w, --website "domain.com"                  Website used at *-g/--google* feature
         
         Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
         Ex2: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
-        Ex3: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt 
+        Ex3: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt
+
+        -={ Command & Control Module }=-
+
+        -lH, --lhost 192.168.0.1                     Local ip to receive zombies responses
+        -lP, --lport 80                              Local port to listen
+        -pP, --pspayload <payload.ps1>               Powershell payload file
+
+        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
 
 # Requirements:
 
