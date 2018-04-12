@@ -1,10 +1,10 @@
 #!/bin/bash
 #=========================================================================
-#Title           :checkFiles.sh
-#Description     :Script to scan files looking for sensitive information.
-#Authors         :L0stControl and BFlag
-#Date            :2018/03/29
-#Version         :0.1.5    
+# Title           :checkFiles.sh
+# Description     :Script to scan files looking for sensitive information.
+# Authors         :L0stControl and BFlag
+# Date            :2018/04/12
+# Version         :0.1.6    
 #=========================================================================
 
 FILENAME=$1
@@ -48,24 +48,33 @@ function cpFiles
 function officeNew
 {
     $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
-    if ( grep -i -R " $WORDPATTERN" $TMPDIR/* ) > /dev/null 2>&1 ; then
+    if ( grep -i -R "$WORDPATTERN" $TMPDIR/* ) > /dev/null 2>&1 ; then
         cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
 
 function officeOld
 {
-    if ( grep -i -a " $WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
+    if ( grep -i -a "$WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
         cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi    
 }
 
 function plainTextFiles
 {
-    if ( grep -i -a " $WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
+    if ( grep -i -a "$WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
         cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
+
+function defaultFiles
+{
+    DEFAULTPATTERN=$(echo "$PATTERNMATCH" |sed 's/ /|/g')
+    if ( grep -i -a -E "$DEFAULTPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for word [$YELLOW$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    fi
+}
+
 
 function pstFiles
 {
@@ -116,6 +125,22 @@ function pstFiles
 
 shopt -s nocasematch
 
+if [[ ${FILENAME: -4} =~ ".PST" ]]; then
+    pstFiles
+fi
+
+if [[ ${FILENAME: -4} =~ ".KEY" ]] || [[ ${FILENAME: -4} =~ ".PCF" ]] || [[ ${FILENAME: -5} =~ ".OVPN" ]] ;then
+
+    cpFiles "$GREEN [+]$WHITE - Possible [$RED VPN CONF / KEY $WHITE] $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+
+fi
+
+if ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
+
+    defaultFiles
+
+fi
+
 for WORDPATTERN in $PATTERNMATCH
     do
         if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ;then
@@ -136,23 +161,13 @@ for WORDPATTERN in $PATTERNMATCH
 
         elif [[ ${FILENAME: -4} =~ ".PDF" ]];then 
 
-            if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | grep -i " $WORDPATTERN" ) > /dev/null 2>&1 ; then
+            if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | grep -i "$WORDPATTERN" ) > /dev/null 2>&1 ; then
             
                 cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
 
             fi
-            
+          
         fi
 done
-
-if [[ ${FILENAME: -4} =~ ".PST" ]]; then
-    pstFiles
-fi
-
-if [[ ${FILENAME: -4} =~ ".KEY" ]] || [[ ${FILENAME: -4} =~ ".PCF" ]] || [[ ${FILENAME: -5} =~ ".OVPN" ]] ;then
-
-    cpFiles "$GREEN [+]$WHITE - Possible [$RED VPN CONF / KEY $WHITE] $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
-
-fi
 
 rm -rf $TMPDIR
