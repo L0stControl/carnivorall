@@ -1,10 +1,10 @@
 #!/bin/bash
 #====================================================================================
-#Title           :checkRegex.sh
-#Description     :Script to scan files looking for sensitive information using regex.
-#Authors         :L0stControl and BFlag
-#Date            :2018/03/13
-#Version         :0.0.1    
+# Title           :checkRegex.sh
+# Description     :Script to scan files looking for sensitive information using regex.
+# Authors         :L0stControl and BFlag
+# Date            :2018/03/13
+# Version         :0.0.1    
 #====================================================================================
 
 FILENAME=$1
