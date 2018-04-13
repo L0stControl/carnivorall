@@ -86,7 +86,7 @@ post "/:content" do
     puts " [+] List of files ".yellow
     resultFind.split(",").each do |lines|
        if lines.match(/File: /)
-        puts " [+] ".green + "#{lines.split("\n")[0].split(" ")[1]}".white
+        puts " [+] ".green + "#{lines.split("\n")[0][18..-1]}".white
        end
     end
     puts " [+] ----------------------------------------------------------------------------------- \n".yellow
