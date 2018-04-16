@@ -3,8 +3,8 @@
 # Title           :carnivorall.sh
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/13
-# Version         :0.6.3    
+# Date            :2018/04/15
+# Version         :0.6.4    
 # Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
 #=============================================================================================
 
@@ -524,7 +524,7 @@ function searchLocalFilesByRegex
 #------#
 echo ""
 
-if [ "$NETWORK" == "notset" -a "$LISTHOSTS" == "notset" -a "$GOOGLE" == "notset" -a "$LFOLDER" == "notset" ];then
+if [ "$NETWORK" == "notset" -a "$LISTHOSTS" == "notset" -a "$GOOGLE" == "notset" -a "$LFOLDER" == "notset" -a "$LPORT" == "notset" ];then
     banner
     echo
     echo -e "$RED [-] ERROR: $YELLOW Syntax error! Please review the options. $DEFAULTCOLOR"
@@ -533,7 +533,7 @@ if [ "$NETWORK" == "notset" -a "$LISTHOSTS" == "notset" -a "$GOOGLE" == "notset"
 elif [ "$LISTHOSTS" != "notset" -a ! -e "$LISTHOSTS" ];then
     banner
     echo
-    echo -e "$RED [-] ERROR: $YELLOW File does not exist $DEFAULTCOLOR"
+    echo -e "$RED [-] ERROR: $YELLOW File with IP addresses does not exist $DEFAULTCOLOR"
     echo
     exit
 elif [ "$GOOGLE" != "notset" -a "$WEBSITE" == "notset" ]; then
@@ -579,8 +579,10 @@ elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
             trap exitZombies 2 # Disable Ctrl-C
             cec.rb "$LHOST" "$PSPAYLOAD" "$PATTERNMATCH" "$FILESFOLDER" "$LPORT"
         fi
+    else
+        cec.rb "$LHOST" "$PSPAYLOAD" "$PATTERNMATCH" "$FILESFOLDER" "$LPORT"
     fi
-
+    exit
 elif [ $LFOLDER != "notset" ]; then
 
     if [ ! -d "$LFOLDER" ]; then
