@@ -59,7 +59,7 @@ function banner {
         -pP, --pspayload <payload.ps1>                 Powershell payload file
 
         Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
-
+        Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
 EOF
 }
 
