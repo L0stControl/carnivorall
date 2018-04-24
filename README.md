@@ -54,7 +54,7 @@ Scan internal network looking for files with sensitive information on SMB shares
 
         Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 
              -pP ./payload.ps1 -lP 80 
-        Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode.
+        Ex5: ./carnivorall -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 # Listen mode.
 
 # Requirements:
 
