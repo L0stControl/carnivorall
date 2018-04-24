@@ -3,8 +3,8 @@
 # Title           :checkRegex.sh
 # Description     :Script to scan files looking for sensitive information using regex.
 # Authors         :L0stControl and BFlag
-# Date            :2018/03/13
-# Version         :0.0.1    
+# Date            :2018/04/24
+# Version         :1.1.2    
 #====================================================================================
 
 FILENAME=$1
@@ -15,9 +15,7 @@ GS=$(whereis gs |awk '{print $2}')
 DSTFOLDER=$4
 LOG=$5
 MOUNTPOINT=$6
-HOSTSMB=$7
-PATHSMB=$8
-FILENAMEMSG=$(echo $FILENAME |sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
+MOUNTPOINT2=$7
 DEFAULTCOLOR="\033[0m"
 BLACK="\033[0;30m"
 RED="\033[0;31m"
@@ -40,25 +38,38 @@ function cpFiles
 
 function plainTextFilesRegex
 {
-    if egrep -i -a "\b$REGEX\b" "$FILENAME" > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
 
-function officeNewRegex # 
+function officeNewRegex
 {
     $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
-    if egrep -i -R --color "\b$REGEX\b" $TMPDIR/* > /dev/null 2>&1; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( egrep -i -R --color "\b$REGEX\b" $TMPDIR/* ) > /dev/null 2>&1; then
+        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
 
 function officeOldRegex
 {
-    if egrep -i -a "\b$REGEX\b" "$FILENAME" > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi    
 }
+
+function defaultFiles
+{
+    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
+        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    fi
+}
+
+if ( echo "$MOUNTPOINT" |grep -i -s "smb://" ) > /dev/null 2>&1 ; then
+    FILENAMEMSG=$MOUNTPOINT$(echo $FILENAME |sed -e 's,'"$MOUNTPOINT2"',,')
+else
+    FILENAMEMSG=$FILENAME
+fi
 
 shopt -s nocasematch
 
@@ -80,13 +91,16 @@ elif [[ ${FILENAME: -4} =~ ".CNF" ]] || [[ ${FILENAME: -5} =~ ".XML" ]] || [[ ${
 
 elif [[ ${FILENAME: -4} =~ ".PDF" ]];then 
 
-    if $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | egrep -i "\b$REGEX\b" > /dev/null 2>&1 ; then
+    if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | egrep -i "\b$REGEX\b" ) > /dev/null 2>&1 ; then
             
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file smb://$FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
 
     fi
-           
-fi
 
+elif ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
+
+    defaultFiles
+
+fi
 
 rm -rf $TMPDIR
