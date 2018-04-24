@@ -3,8 +3,8 @@
 # Title           :carnivorall.sh
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/15
-# Version         :0.6.4    
+# Date            :2018/04/24
+# Version         :0.7.5    
 # Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
 #=============================================================================================
 
@@ -130,13 +130,13 @@ case $KEY in
     ;;
     -e|--emails)
     EMAILS="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -l|--list)
     LISTHOSTS="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -o|--only)
     ONLY="$2"
@@ -267,7 +267,8 @@ function checkReadableShare
 function scanner
 {
     HOSTS=$1
-    echo 1 > /dev/shm/holdcarnivorall # Using shared memory to avoid sync problems
+    echo 1 > /dev/shm/holdcarnivorall 2> /dev/null # Using shared memory to avoid sync problems
+    chmod -f 777 /dev/shm/holdcarnivorall 
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
@@ -292,13 +293,16 @@ function generateTargets
                 scanner $HOSTS &
                 sleep $DELAY
             done 
-    else
+    elif [ "$NETWORK" != "notset" ]; then
         readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
         for HOSTS in "${IPS[@]}"
         do
             scanner $HOSTS &
             sleep $DELAY
         done
+    else
+        echo -e "$RED [-] ERROR: $YELLOW Sintax error \n$DEFAULTCOLOR"
+        exit
     fi   
 }
 
@@ -353,7 +357,7 @@ function searchFilesByRegex
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
     
-    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB \;
+    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB $MOUNTPOINT \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
@@ -449,7 +453,7 @@ function startZombies
 function exitZombies
 {
     killall -9 winexe64 > /dev/null
-    echo -e "$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
+    echo -e "$RED............Process stopped! keep hacking =)$DEFAULTCOLOR"
     sleep 2
     kill -9 $PIDCARNIVORALL
 }
@@ -503,7 +507,7 @@ function searchLocalFilesWithYara
 
 function searchLocalFilesByRegex
 {
-    LOCALFOLDER=$2
+    LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
     echo -e "$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
@@ -511,7 +515,7 @@ function searchLocalFilesByRegex
         mkdir $FILESFOLDER/$BASENAME
         mkdir $FILESFOLDER/$BASENAME/tmp 
     fi
-    find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ $LOG $BASENAME \;
+    find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT \;
 
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
@@ -555,13 +559,13 @@ fi
 
 if [ "$EMAILS" == "y" ];then
     echo 1 > /tmp/pstdefault
-    chmod 777 /tmp/pstdefault
+    chmod -f 777 /tmp/pstdefault
     elif [ "$EMAILS" == "n" ];then
     echo 2 > /tmp/pstdefault
-    chmod 777 /tmp/pstdefault
+    chmod -f 777 /tmp/pstdefault
     else
     echo 0 > /tmp/pstdefault
-    chmod 777 /tmp/pstdefault
+    chmod -f 777 /tmp/pstdefault
 fi
 
 if [ $GOOGLE != "notset" -a $LHOST == "notset" ]; then
@@ -571,7 +575,7 @@ if [ $GOOGLE != "notset" -a $LHOST == "notset" ]; then
 
 elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
 
-    if [ "$PSPAYLOAD" != "notset" ]; then
+    if [ "$PSPAYLOAD" != "notset" -a "$NETWORK" != "notset" ]; then
         if [ ! -e "$PSPAYLOAD" ];then
             echo -e "$RED [-] ERROR: $YELLOW File does not exist $DEFAULTCOLOR"
         else
@@ -597,7 +601,7 @@ elif [ $LFOLDER != "notset" ]; then
         elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
             searchLocalFilesWithYara $YARAFILE $LFOLDER
            
-        elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
+        elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
             searchLocalFilesByRegex $LFOLDER
         else
             searchLocalFilesByName $LFOLDER
