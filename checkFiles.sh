@@ -135,10 +135,13 @@ if [[ ${FILENAME: -4} =~ ".KEY" ]] || [[ ${FILENAME: -4} =~ ".PCF" ]] || [[ ${FI
 
 fi
 
-if ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
+if ( file -n "$FILENAME"  | grep -i "ASCII" )  > /dev/null 2>&1 ; then
+
+    if [[ ! ${FILENAME: -4} =~ ".TXT" ]] || [[ ! ${FILENAME: -5} =~ ".CSV" ]]; then
 
     defaultFiles
 
+    fi
 fi
 
 for WORDPATTERN in $PATTERNMATCH
