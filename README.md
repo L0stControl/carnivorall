@@ -18,7 +18,7 @@
 
 # Intro
 
-Scan internal network looking for files with sensitive information on SMB shares. 
+Scan files looking for sensitive information on SMB shares, local folders and public websites. 
 
 # Usage
 
