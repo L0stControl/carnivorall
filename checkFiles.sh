@@ -3,8 +3,8 @@
 # Title           :checkFiles.sh
 # Description     :Script to scan files looking for sensitive information.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/12
-# Version         :0.1.6    
+# Date            :2018/04/24
+# Version         :0.1.7    
 #=========================================================================
 
 FILENAME=$1
