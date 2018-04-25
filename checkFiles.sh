@@ -60,21 +60,13 @@ function officeOld
     fi    
 }
 
-function plainTextFiles
-{
-    if ( grep -i -a "$WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
-    fi
-}
-
 function defaultFiles
 {
     DEFAULTPATTERN=$(echo "$PATTERNMATCH" |sed 's/ /|/g')
     if ( grep -i -a -E "$DEFAULTPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for word [$YELLOW$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+        cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
     fi
 }
-
 
 function pstFiles
 {
@@ -137,11 +129,8 @@ fi
 
 if ( file -n "$FILENAME"  | grep -i "ASCII" )  > /dev/null 2>&1 ; then
 
-    if [[ ! ${FILENAME: -4} =~ ".TXT" ]] || [[ ! ${FILENAME: -5} =~ ".CSV" ]]; then
-
     defaultFiles
 
-    fi
 fi
 
 for WORDPATTERN in $PATTERNMATCH
@@ -153,14 +142,6 @@ for WORDPATTERN in $PATTERNMATCH
         elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${FILENAME: -4} =~ ".PPT" ]] ;then
 
             officeOld
-
-        elif [[ ${FILENAME: -4} =~ ".TXT" ]] || [[ ${FILENAME: -5} =~ ".CONF" ]] || [[ ${FILENAME: -4} =~ ".CSV" ]] ;then
-
-            plainTextFiles
-        
-        elif [[ ${FILENAME: -4} =~ ".CNF" ]] || [[ ${FILENAME: -4} =~ ".XML" ]] || [[ ${FILENAME: -4} =~ ".LOG" ]] ;then
-
-            plainTextFiles
 
         elif [[ ${FILENAME: -4} =~ ".PDF" ]];then 
 
