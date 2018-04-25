@@ -150,7 +150,6 @@ for WORDPATTERN in $PATTERNMATCH
                 cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
 
             fi
-          
         fi
 done
 

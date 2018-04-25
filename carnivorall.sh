@@ -315,10 +315,14 @@ function searchFilesByName
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB 2>&1 > /dev/null
     fi
- 
+
     for p in $PATTERNMATCH
     do
-        find $MOUNTPOINT \( -iname "*"$p"*" ! -iname "*.zip" \) -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; | sed "s/^.\{,${#MOUNTPOINT}\}/ [+] - $HOSTSMB\/$PATHSMB/" | tail -n +2 |tee -a $LOG
+        find $MOUNTPOINT -type f \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; |while read OUTPUTS 
+        do
+            NEWOUTPUT=$(echo $OUTPUTS | sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
+            echo -e "$GREEN [+]$WHITE - File copied $NEWOUTPUT $DEFAULTCOLOR" |tee -a $LOG
+        done
     done
     
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
@@ -331,7 +335,7 @@ function searchFilesByContent
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious content files"
+    echo -e "$WHITE [+] Looking for suspicious content files in smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
@@ -469,7 +473,11 @@ function searchLocalFilesByName
     fi
     for p in $PATTERNMATCH
     do
-        find $LOCALFOLDER \( -iname "*"$p"*" ! -iname "*.zip" \) -printf ' [+] %p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$BASENAME \; |tee -a $LOG
+        find $LOCALFOLDER \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$BASENAME \; |while read OUTPUTS 
+        do
+            echo -e "$GREEN [+]$WHITE - File copied $OUTPUTS $DEFAULTCOLOR" |tee -a $LOG
+        done
+
     done
     
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
@@ -587,25 +595,29 @@ elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
         cec.rb "$LHOST" "$PSPAYLOAD" "$PATTERNMATCH" "$FILESFOLDER" "$LPORT"
     fi
     exit
+
 elif [ $LFOLDER != "notset" ]; then
 
     if [ ! -d "$LFOLDER" ]; then
         echo -e "$RED [-] ERROR: $YELLOW Directory does not exist $DEFAULTCOLOR"
+        exit
     else
         if [ $ONLY == "filenames" ];then
             searchLocalFilesByName $LFOLDER
-        
+            exit
         elif [ $ONLY == "contents" ];then
             searchLocalFilesByContent $LFOLDER
-           
+            exit
         elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
             searchLocalFilesWithYara $YARAFILE $LFOLDER
-           
+            exit
         elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
             searchLocalFilesByRegex $LFOLDER
+            exit
         else
             searchLocalFilesByName $LFOLDER
             searchLocalFilesByContent $LFOLDER
+            exit
         fi         
     fi 
 
@@ -618,13 +630,12 @@ while [ $(</dev/shm/holdcarnivorall) -eq 1 ]
 do
     sleep 1
 done
-
+echo
 if [ -s "$SHARESFILE" ];then
     NUMBERLINESFILE=$(cat $SHARESFILE |wc -l)
     COUNT=1
     while :
     do
-       echo
        echo -e "$YELLOW Choose your option $WHITE"
        echo 0 > /tmp/pstdefault
        echo
@@ -676,7 +687,7 @@ if [ -s "$SHARESFILE" ];then
            exit
            ;;
        "c")
-           echo -en " $YELLOW Type new pattern matches separated by spaces ...: $WHITE"
+           echo -en "$YELLOW Type new pattern matches separated by spaces ...: $WHITE"
            echo -en "$DEFAULTCOLOR"
            read PATTERNMATCH
            ;;
