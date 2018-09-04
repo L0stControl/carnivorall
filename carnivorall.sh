@@ -536,6 +536,13 @@ function searchLocalFilesByRegex
 #------#
 echo ""
 
+#Checking to see if smbclient is installed
+if ! command -v smbclient >/dev/null 2>&1 ; then
+    echo -e "$RED [-] ERROR: $YELLOW SMBCLIENT not found. $DEFAULTCOLOR"
+    echo
+    exit
+fi
+
 if [ "$NETWORK" == "notset" -a "$LISTHOSTS" == "notset" -a "$GOOGLE" == "notset" -a "$LFOLDER" == "notset" -a "$LPORT" == "notset" ];then
     banner
     echo
