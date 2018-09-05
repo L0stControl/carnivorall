@@ -3,8 +3,8 @@
 # Title           :checkRegex.sh
 # Description     :Script to scan files looking for sensitive information using regex.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/24
-# Version         :1.1.2    
+# Date            :2018/09/05
+# Version         :1.2.3    
 #====================================================================================
 
 FILENAME=$1
@@ -16,8 +16,8 @@ DSTFOLDER=$4
 LOG=$5
 MOUNTPOINT=$6
 MOUNTPOINT2=$7
+VERBOSE=$8
 DEFAULTCOLOR="\033[0m"
-BLACK="\033[0;30m"
 RED="\033[0;31m"
 GREEN="\033[0;32m"
 WHITE="\033[1;37m"
@@ -36,32 +36,53 @@ function cpFiles
     echo -e "$MSG" 
 }
 
-function plainTextFilesRegex
-{
-    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
-    fi
-}
-
 function officeNewRegex
 {
-    $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
-    if ( egrep -i -R --color "\b$REGEX\b" $TMPDIR/* ) > /dev/null 2>&1; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if [ $VERBOSE == "yes" ]; then
+        $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
+        if RESULT=$(egrep -i -R -A2 -B2 "\b$REGEX\b" $TMPDIR/*); then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            echo
+            echo "$RESULT" | egrep -i -A2 -B2 --color "\b$REGEX\b"
+            echo
+        fi
+    else    
+        $UNZIP -q -o "$FILENAME" -d $TMPDIR > /dev/null 2>&1
+        if ( egrep -i -R --color "\b$REGEX\b" $TMPDIR/* ) > /dev/null 2>&1; then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+        fi
     fi
 }
 
 function officeOldRegex
 {
-    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
-    fi    
+    if [ $VERBOSE == "yes" ]; then
+        if RESULT=$(egrep -i -a -A2 -B2 "\b$REGEX\b" "$FILENAME"); then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            echo
+            echo "$RESULT" | egrep -i -a -A2 -B2 --color "\b$REGEX\b"
+            echo
+        fi  
+    else
+        if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+        fi  
+    fi  
 }
 
 function defaultFiles
 {
-    if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    if [ $VERBOSE == "yes" ]; then
+        if RESULT=$(egrep -i -a -A2 -B2 "\b$REGEX\b" "$FILENAME"); then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            echo
+            echo "$RESULT" | egrep -i -a -A2 -B2 --color "\b$REGEX\b"
+            echo
+        fi
+    else
+        if ( egrep -i -a "\b$REGEX\b" "$FILENAME" ) > /dev/null 2>&1 ; then
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+        fi
     fi
 }
 
@@ -73,6 +94,12 @@ fi
 
 shopt -s nocasematch
 
+if ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
+
+    defaultFiles
+
+fi
+
 if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ;then
     
     officeNewRegex
@@ -81,26 +108,26 @@ elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${
 
     officeOldRegex
 
-elif [[ ${FILENAME: -4} =~ ".TXT" ]] || [[ ${FILENAME: -5} =~ ".CONF" ]] || [[ ${FILENAME: -4} =~ ".CSV" ]] ;then
+elif [[ ${FILENAME: -4} =~ ".PDF" ]]; then
 
-    plainTextFilesRegex
-
-elif [[ ${FILENAME: -4} =~ ".CNF" ]] || [[ ${FILENAME: -5} =~ ".XML" ]] || [[ ${FILENAME: -4} =~ ".CSV" ]] ;then
-
-    plainTextFilesRegex
-
-elif [[ ${FILENAME: -4} =~ ".PDF" ]];then 
-
-    if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -dBATCH "$FILENAME" | egrep -i "\b$REGEX\b" ) > /dev/null 2>&1 ; then
+    if [ $VERBOSE == "yes" ]; then
+        if RESULT=$($GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -sstdout=%stderr \
+            -dBATCH "$FILENAME" 2>/dev/null | egrep -i -A2 -B2 "\b$REGEX\b") ; then
             
-        cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            echo
+            echo -e "$RESULT" | egrep -i -A2 -B2 --color "\b$REGEX\b"
+            echo
+        fi
+    else
+        if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT \
+        -dQUIET -dBATCH "$FILENAME" | egrep -i "\b$REGEX\b" ) > /dev/null 2>&1 ; then
+            
+            cpFiles "$GREEN [+]$WHITE - Looking for REGEX [$RED$REGEX$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
 
+        fi
     fi
-
-elif ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
-
-    defaultFiles
-
 fi
 
 rm -rf $TMPDIR
+

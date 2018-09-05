@@ -3,8 +3,8 @@
 # Title           :carnivorall.sh
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
-# Date            :2018/04/24
-# Version         :0.7.5    
+# Date            :2018/09/05
+# Version         :0.8.6    
 # Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
 #=============================================================================================
 
@@ -47,6 +47,7 @@ function banner {
         -h, --help                                  Display options
         -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
         -w, --website "domain.com"                  Website used at *-g/--google* feature
+        -v, --verbose no                            Display all matches at run time (default yes)
         
         Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
         Ex2: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
@@ -60,6 +61,7 @@ function banner {
 
         Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
         Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
+
 EOF
 }
 
@@ -158,6 +160,11 @@ case $KEY in
     shift 
     shift 
     ;;
+    -v|--verbose)
+    VERBOSE="$2"
+    shift 
+    shift 
+    ;;
     -lP|--lport)
     LPORT="$2"
     shift 
@@ -197,6 +204,7 @@ LHOST="${LHOST:=notset}"
 PSPAYLOAD="${PSPAYLOAD:=notset}"
 LPORT="${LPORT:=80}"
 LFOLDER="${LFOLDER:=notset}"
+VERBOSE="${VERBOSE:=yes}"
 MOUNTPOINT=~/.carnivorall/mnt
 SHARESFILE=~/.carnivorall/shares.txt
 FILESFOLDER=~/.carnivorall/files
@@ -204,6 +212,8 @@ SMB=$(whereis smbclient |awk '{print $2}')
 MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
+GSCRIPT=$(whereis gs |awk '{print $2}')
+RUBY=$(whereis ruby |awk '{print $2}')
 LOG=~/.carnivorall/log
 SHARES=""
 DEFAULTCOLOR="\033[0m"
@@ -215,10 +225,46 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 EXITCTRL=0
+DEPGEMS=("nokogiri" "httparty" "colorize" "sinatra")
 
 #-----------#
 # Functions #
 #-----------#
+
+function checkDependencies
+{
+    EXIT=0
+
+    if ! [[ ${SMB: -9} =~ "smbclient" ]] ; then
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW smbclient$RED package \n"
+        EXIT=1
+    fi    
+    
+    if ! [[ ${GSCRIPT: -2} =~ "gs" ]] ; then
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ghostscript$RED package \n"
+        EXIT=1
+    fi
+
+    if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package \n"
+        EXIT=1
+    fi
+
+    RUBYGEMS=$(gem list --local)
+    
+    for GEM in "${DEPGEMS[@]}"
+    do
+        if ! ( echo $RUBYGEMS | grep -i $GEM ) > /dev/null 2>&1 ; then
+            echo -e "\n$RED [!] Ruby dependecies error, please type$YELLOW gem install $GEM"
+            EXIT=1
+        fi
+    done
+
+    if [ $EXIT -eq 1 ]; then
+        echo
+        exit
+    fi 
+}
 
 function checkHomeFolders
 {
@@ -269,7 +315,7 @@ function scanner
     HOSTS=$1
     echo 1 > /dev/shm/holdcarnivorall 2> /dev/null # Using shared memory to avoid sync problems
     chmod -f 777 /dev/shm/holdcarnivorall 
-    echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
+    echo -e "\n$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
         PATHSMB=$(echo $i |awk -F"|" '{print $2}')
@@ -301,7 +347,7 @@ function generateTargets
             sleep $DELAY
         done
     else
-        echo -e "$RED [-] ERROR: $YELLOW Sintax error \n$DEFAULTCOLOR"
+        echo -e "\n$RED [!] ERROR: $YELLOW Sintax error \n$DEFAULTCOLOR"
         exit
     fi   
 }
@@ -310,7 +356,7 @@ function searchFilesByName
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious filenames on smb://$HOSTSMB/$PATHSMB"
+    echo -e "\n$WHITE [+] Looking for suspicious filenames on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB 2>&1 > /dev/null
@@ -318,7 +364,8 @@ function searchFilesByName
 
     for p in $PATTERNMATCH
     do
-        find $MOUNTPOINT -type f \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -exec cp --backup=numbered {} $FILESFOLDER/$HOSTSMB\_$PATHSMB \; |while read OUTPUTS 
+        find $MOUNTPOINT -type f \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -exec cp --backup=numbered {} \
+        $FILESFOLDER/$HOSTSMB\_$PATHSMB \; |while read OUTPUTS 
         do
             NEWOUTPUT=$(echo $OUTPUTS | sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
             echo -e "$GREEN [+]$WHITE - File copied $NEWOUTPUT $DEFAULTCOLOR" |tee -a $LOG
@@ -328,40 +375,40 @@ function searchFilesByName
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
-    echo
 }
 
 function searchFilesByContent
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious content files in smb://$HOSTSMB/$PATHSMB"
+    echo -e "\n$WHITE [+] Looking for suspicious content files in smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
   
-    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB/{} $MOUNTPOINT \;
+    find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp \
+    $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB/{} $MOUNTPOINT $VERBOSE \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
-    echo
 }
 
 function searchFilesByRegex
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on smb://$HOSTSMB/$PATHSMB"
+    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
     fi
     
-    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB $MOUNTPOINT \;
+    find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ \
+    $LOG smb://$HOSTSMB/$PATHSMB $MOUNTPOINT $VERBOSE \;
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
@@ -377,7 +424,7 @@ function umountTarget
 
 function exitScan 
 {
-    echo -e "$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
+    echo -e "\n$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
     umountTarget
     kill -9 $PIDCARNIVORALL     
 }
@@ -387,9 +434,7 @@ function mountTarget
     HOSTSMB=$1
     PATHSMB=$2
     if [ $(id -u) -ne 0 ];then
-        echo
-        echo -e "$RED  You must be root to use this options =( $DEFAULTCOLOR"
-        echo
+        echo -e "\n$RED  You must be root to use this options =( $DEFAULTCOLOR \n"
         exit
     else
         $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
@@ -400,8 +445,7 @@ function mountTarget
 function searchFilesWithYara
 {
     JUICE=$1
-    echo -e "$GREEN [+]$WHITE Searching sensitive information with Yara smb://$HOSTSMB/$PATHSMB $DEFAULTCOLOR"
-    echo
+    echo -e "\n$GREEN [+]$WHITE Searching sensitive information with Yara smb://$HOSTSMB/$PATHSMB $DEFAULTCOLOR"
     $YARA -r $JUICE $MOUNTPOINT |tee -a $LOG
 }
 
@@ -414,10 +458,11 @@ function searchFilesWithGoogle
 
     scraping.rb $WEBSITE $GOOGLE $FILESFOLDER/$WEBSITE/downloads
 
-    echo -e "$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE"
+    echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE"
     echo -e "$DEFAULTCOLOR"
 
-    find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp $FILESFOLDER/$WEBSITE/ $LOG /{} \;
+    find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp \
+    $FILESFOLDER/$WEBSITE/ $LOG /{} 0 $VERBOSE \;
 }
 
 function executePowerShell
@@ -457,7 +502,7 @@ function startZombies
 function exitZombies
 {
     killall -9 winexe64 > /dev/null
-    echo -e "$RED............Process stopped! keep hacking =)$DEFAULTCOLOR"
+    echo -e "\n$RED............Process stopped! keep hacking =)$DEFAULTCOLOR"
     sleep 2
     kill -9 $PIDCARNIVORALL
 }
@@ -466,14 +511,15 @@ function searchLocalFilesByName
 {
     LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
-    echo -e "$WHITE [+] Looking for suspicious filenames on $LOCALFOLDER"
+    echo -e "\n$WHITE [+] Looking for suspicious filenames on $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME 2>&1 > /dev/null
     fi
     for p in $PATTERNMATCH
     do
-        find $LOCALFOLDER \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -type f -exec cp --backup=numbered {} $FILESFOLDER/$BASENAME \; |while read OUTPUTS 
+        find $LOCALFOLDER \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -type f -exec cp --backup=numbered {} \
+        $FILESFOLDER/$BASENAME \; |while read OUTPUTS 
         do
             echo -e "$GREEN [+]$WHITE - File copied $OUTPUTS $DEFAULTCOLOR" |tee -a $LOG
         done
@@ -483,32 +529,31 @@ function searchLocalFilesByName
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
     fi
-    echo
 }
 
 function searchLocalFilesByContent
 {
     LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
-    echo -e "$WHITE [+] Looking for suspicious content files in $LOCALFOLDER"
+    echo -e "\n$WHITE [+] Looking for suspicious content files in $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
         mkdir $FILESFOLDER/$BASENAME/tmp 
     fi
-    find $LOCALFOLDER -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ $LOG $BASENAME/{} $BASENAME \;
+    find $LOCALFOLDER -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ \
+    $LOG $BASENAME/{} $BASENAME $VERBOSE \;
 
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
     fi
-    echo
 }
 
 function searchLocalFilesWithYara
 {
     JUICE=$1
     LOCALFOLDER=$2
-    echo -e "$GREEN [+]$WHITE Searching sensitive information with Yara $LOCALFOLDER"
+    echo -e "\n$GREEN [+]$WHITE Searching sensitive information with Yara $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
     $YARA -r $JUICE $LOCALFOLDER |tee -a $LOG
 }
@@ -517,13 +562,15 @@ function searchLocalFilesByRegex
 {
     LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
-    echo -e "$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on $LOCALFOLDER"
+    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
         mkdir $FILESFOLDER/$BASENAME/tmp 
     fi
-    find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT \;
+    
+    find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
+    $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
 
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
@@ -534,26 +581,21 @@ function searchLocalFilesByRegex
 #------#
 # main #
 #------#
-echo ""
+
+checkDependencies
 
 if [ "$NETWORK" == "notset" -a "$LISTHOSTS" == "notset" -a "$GOOGLE" == "notset" -a "$LFOLDER" == "notset" -a "$LPORT" == "notset" ];then
     banner
-    echo
-    echo -e "$RED [-] ERROR: $YELLOW Syntax error! Please review the options. $DEFAULTCOLOR"
-    echo
+    echo -e "\n$RED [!] ERROR: $YELLOW Syntax error! Please review the options. $DEFAULTCOLOR\n"
     exit
 elif [ "$LISTHOSTS" != "notset" -a ! -e "$LISTHOSTS" ];then
     banner
-    echo
-    echo -e "$RED [-] ERROR: $YELLOW File with IP addresses does not exist $DEFAULTCOLOR"
-    echo
+    echo -e "\n$RED [!] ERROR: $YELLOW File with IP addresses does not exist $DEFAULTCOLOR\n"
     exit
 elif [ "$GOOGLE" != "notset" -a "$WEBSITE" == "notset" ]; then
     banner
-    echo
-    echo -e "$RED [-] ERROR: $YELLOW You need to inform the website $DEFAULTCOLOR"
-    echo -e "        $YELLOW Sintax example:$GREEN carnivorall -g 100 -w example.com $DEFAULTCOLOR"
-    echo
+    echo -e "\n$RED [!] ERROR: $YELLOW You need to inform the website $DEFAULTCOLOR"
+    echo -e "        $YELLOW Sintax example:$GREEN carnivorall -g 100 -w example.com $DEFAULTCOLOR \n"
     exit
 fi
 
@@ -585,7 +627,7 @@ elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
 
     if [ "$PSPAYLOAD" != "notset" -a "$NETWORK" != "notset" ]; then
         if [ ! -e "$PSPAYLOAD" ];then
-            echo -e "$RED [-] ERROR: $YELLOW File does not exist $DEFAULTCOLOR"
+            echo -e "$RED [!] ERROR: $YELLOW File does not exist $DEFAULTCOLOR"
         else
             startZombies &
             trap exitZombies 2 # Disable Ctrl-C
@@ -599,7 +641,7 @@ elif [ $GOOGLE == "notset" -a $LHOST != "notset" ]; then
 elif [ $LFOLDER != "notset" ]; then
 
     if [ ! -d "$LFOLDER" ]; then
-        echo -e "$RED [-] ERROR: $YELLOW Directory does not exist $DEFAULTCOLOR"
+        echo -e "$RED [!] ERROR: $YELLOW Directory does not exist $DEFAULTCOLOR"
         exit
     else
         if [ $ONLY == "filenames" ];then
@@ -646,7 +688,11 @@ if [ -s "$SHARESFILE" ];then
            COUNT=$(($COUNT + 1))
        done
        echo -e "$DEFAULTCOLOR ( a ).... Look for files in all targets"
-       echo -e "$DEFAULTCOLOR ( c ).... Change pattern match(es) string(s), now = $RED[$PATTERNMATCH]$DEFAULTCOLOR"
+       if [ $REGEX != "notset" ] ; then
+           echo -e "$DEFAULTCOLOR ( c ).... Change REGEX pattern, current = $RED[ $REGEX ]$DEFAULTCOLOR"
+       else 
+           echo -e "$DEFAULTCOLOR ( c ).... Change pattern match(es) string(s), current = $RED[ $PATTERNMATCH ]$DEFAULTCOLOR"
+       fi
        echo -e "$DEFAULTCOLOR ( r ).... Rescan target(s)"       
        echo -e " ( q ).... Quit" 
        echo
@@ -687,9 +733,17 @@ if [ -s "$SHARESFILE" ];then
            exit
            ;;
        "c")
-           echo -en "$YELLOW Type new pattern matches separated by spaces ...: $WHITE"
-           echo -en "$DEFAULTCOLOR"
-           read PATTERNMATCH
+           if [ $REGEX != "notset" ] ; then
+               echo -en "$YELLOW Type new REGEX ...: $WHITE"
+               echo -en "$DEFAULTCOLOR"
+               read REGEX
+               echo
+           else
+               echo -en "$YELLOW Type new pattern matches separated by spaces ...: $WHITE"
+               echo -en "$DEFAULTCOLOR"
+               read PATTERNMATCH
+               echo
+           fi
            ;;
        "r")
            generateTargets
