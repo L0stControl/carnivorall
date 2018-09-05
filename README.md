@@ -22,9 +22,6 @@ Scan files looking for sensitive information on SMB shares, local folders and pu
 
 # Usage
 
-  ================================================================================================             
-                --=={ Looking for sensitive information on local network }==--                                  
-
     Usage: ./carnivorall.sh [options]
     
         -n, --network <CIDR>                        192.168.0.0/24
@@ -40,7 +37,8 @@ Scan files looking for sensitive information on SMB shares, local folders and pu
         -D, --delay <Number>                        Delay between requests
        -lD, --localfolder /path/                    For search sensitive information in local files  
         -h, --help                                  Display options
-        -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
+        -g, --google <max items>                    Search files on the website using Google 
+                                                    (Obs: Set to "0" to search in local files)
         -w, --website "domain.com"                  Website used at *-g/--google* feature
         -v, --verbose no                            Display all matches at run time (default yes)
         
