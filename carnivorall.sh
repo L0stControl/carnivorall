@@ -460,7 +460,6 @@ function searchFilesWithGoogle
 
 
     if [ $REGEX != "notset" ]; then
-        #BUG
         echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX [ $REGEX ] $DEFAULTCOLOR\n"
         find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
         $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
