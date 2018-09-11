@@ -458,11 +458,20 @@ function searchFilesWithGoogle
 
     scraping.rb $WEBSITE $GOOGLE $FILESFOLDER/$WEBSITE/downloads
 
-    echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE"
-    echo -e "$DEFAULTCOLOR"
 
-    find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp \
-    $FILESFOLDER/$WEBSITE/ $LOG /{} 0 $VERBOSE \;
+    if [ $REGEX != "notset" ]; then
+        #BUG
+        echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX [ $REGEX ] $DEFAULTCOLOR\n"
+        find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
+        $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
+
+    else
+
+        echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE $DEFAULTCOLOR\n"
+        find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp \
+        $FILESFOLDER/$WEBSITE/ $LOG /{} 0 $VERBOSE \;
+    
+    fi
 }
 
 function executePowerShell

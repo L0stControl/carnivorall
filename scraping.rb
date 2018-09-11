@@ -42,7 +42,7 @@ def getListFiles(domain, startItems, qtItems)
             puts
             puts  " [+]".green + " Looking for suspicious content in local files ".white
     else
-        begin #proxy , http_proxyaddr:"115.70.28.209", http_proxyport:"53281"}
+        begin 
             HTTParty.get("https://www.google.com.br/search?q=site:#{domain}+(+filetype:xlsx+%7C+filetype:xls+%7C+filetype:docx+%7C+filetype:doc+%7C+filetype:pptx+%7C+filetype:ppt+%7C+filetype:txt+%7C+ext:conf+%7C+filetype:csv+%7C+filetype:cnf+%7C+filetype:pdf+%7C+ext:key+%7C+ext:ovpn+%7C+ext:log+%7C+filetype:pcf+)&num=#{qtItems}&start=#{(startItems * 100) + 1}&sa=N&filter=0")
         rescue Exception => e
             puts "Error trying to use Google, please check your internet connection!"
@@ -73,22 +73,22 @@ if listLinks.length != 0
     
         link = URI.decode(linkRaw.encode("UTF-16be", :invalid=>:replace, :replace=>"?").encode('UTF-8').split("=")[2].split("&")[0] )
         fileName = link.split("/").last
-        print " [+]".green + " Downloading File: #{link}.... ".white
+        print " [+]".green + " Downloading File: #{link} ".white
 
         begin
+        
         remoteFile = HTTParty.get(link, {headers: {"User-Agent" => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Carnivorall/0.6.1 Safari/537.36"}})
         puts "[OK]".green
             File.open("#{tmpDir}/#{fileName}", "w") do |file|
                 file.write(remoteFile)   
                 file.close
-             # Exiftool
             end
         
         rescue
+        
             puts "[FAIL]".red
     
         end
     end
 end
 
-puts ""
