@@ -315,7 +315,7 @@ function scanner
     HOSTS=$1
     echo 1 > /dev/shm/holdcarnivorall 2> /dev/null # Using shared memory to avoid sync problems
     chmod -f 777 /dev/shm/holdcarnivorall 
-    echo -e "\n$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
+    echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
         PATHSMB=$(echo $i |awk -F"|" '{print $2}')
