@@ -458,10 +458,9 @@ function searchFilesWithGoogle
 
     scraping.rb $WEBSITE $GOOGLE $FILESFOLDER/$WEBSITE/downloads
 
-
     if [ $REGEX != "notset" ]; then
         echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX [ $REGEX ] $DEFAULTCOLOR\n"
-        find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
+        find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$WEBSITE/tmp \
         $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
 
     else
