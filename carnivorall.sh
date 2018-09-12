@@ -696,7 +696,7 @@ if [ -s "$SHARESFILE" ];then
        done
        echo -e "$DEFAULTCOLOR ( a ).... Look for files in all targets"
        if [ $REGEX != "notset" ] ; then
-           echo -e "$DEFAULTCOLOR ( c ).... Change REGEX pattern, current = $RED[ $REGEX ]$DEFAULTCOLOR"
+           echo -e "$DEFAULTCOLOR ( c ).... Change REGEX pattern, current =$RED $REGEX $DEFAULTCOLOR"
        else 
            echo -e "$DEFAULTCOLOR ( c ).... Change pattern match(es) string(s), current = $RED[ $PATTERNMATCH ]$DEFAULTCOLOR"
        fi
@@ -743,7 +743,7 @@ if [ -s "$SHARESFILE" ];then
            if [ $REGEX != "notset" ] ; then
                echo -en "$YELLOW Type new REGEX ...: $WHITE"
                echo -en "$DEFAULTCOLOR"
-               read REGEX
+               read -r REGEX
                echo
            else
                echo -en "$YELLOW Type new pattern matches separated by spaces ...: $WHITE"
