@@ -178,7 +178,11 @@ for WORDPATTERN in $PATTERNMATCH
         if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ; then
         
             officeNew
-        
+
+        elif [[ ${FILENAME: -4} =~ ".ODT" ]] || [[ ${FILENAME: -4} =~ ".ODS" ]] || [[ ${FILENAME: -4} =~ ".ODP" ]] ; then
+
+            officeNew
+
         elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${FILENAME: -4} =~ ".PPT" ]] ; then
 
             officeOld
