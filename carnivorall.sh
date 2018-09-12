@@ -400,7 +400,7 @@ function searchFilesByRegex
 {
     HOSTSMB=$1
     PATHSMB=$2
-    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on smb://$HOSTSMB/$PATHSMB"
+    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX $REGEX on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
         mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
@@ -459,7 +459,7 @@ function searchFilesWithGoogle
     scraping.rb $WEBSITE $GOOGLE $FILESFOLDER/$WEBSITE/downloads
 
     if [ $REGEX != "notset" ]; then
-        echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX [ $REGEX ] $DEFAULTCOLOR\n"
+        echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX $REGEX $DEFAULTCOLOR\n"
         find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$WEBSITE/tmp \
         $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
 
@@ -569,7 +569,7 @@ function searchLocalFilesByRegex
 {
     LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
-    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX [$REGEX] on $LOCALFOLDER"
+    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX $REGEX on $LOCALFOLDER"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
