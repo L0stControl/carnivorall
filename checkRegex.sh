@@ -100,15 +100,17 @@ if ( file -n "$FILENAME" | grep -i "ASCII" ) > /dev/null 2>&1 ; then
 
 fi
 
-if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ;then
+echo -en "$GREEN Checking file => $DEFAULTCOLOR$FILENAMEMSG \033[K\r"
+
+if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ; then
     
     officeNewRegex
 
-elif [[ ${FILENAME: -4} =~ ".ODT" ]] || [[ ${FILENAME: -4} =~ ".ODS" ]] || [[ ${FILENAME: -4} =~ ".ODP" ]] ;then
+elif [[ ${FILENAME: -4} =~ ".ODT" ]] || [[ ${FILENAME: -4} =~ ".ODS" ]] || [[ ${FILENAME: -4} =~ ".ODP" ]] ; then
 
     officeNewRegex
 
-elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${FILENAME: -4} =~ ".PPT" ]] ;then
+elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${FILENAME: -4} =~ ".PPT" ]] ; then
 
     officeOldRegex
 

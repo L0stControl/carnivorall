@@ -281,10 +281,10 @@ function dateLog
 { 
     MSG=$1
     echo >> $LOG
-    echo "----------------------------" >> $LOG
-    date >> $LOG
-    echo "----------------------------" >> $LOG
-    echo "$MSG" >> $LOG 
+    echo " ----------------------------" >> $LOG
+    echo " "$(date) >> $LOG
+    echo " ----------------------------" >> $LOG
+    echo " $MSG" >> $LOG 
 }
 
 function listShares 
@@ -391,6 +391,8 @@ function searchFilesByContent
     find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp \
     $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB/{} $MOUNTPOINT $VERBOSE \;
 
+    echo -en "\033[K\r"
+
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
@@ -409,6 +411,8 @@ function searchFilesByRegex
     
     find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ \
     $LOG smb://$HOSTSMB/$PATHSMB $MOUNTPOINT $VERBOSE \;
+
+    echo -en "\033[K\r"
 
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
@@ -462,12 +466,14 @@ function searchFilesWithGoogle
         echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE using REGEX $REGEX $DEFAULTCOLOR\n"
         find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$WEBSITE/tmp \
         $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
+        echo -en "\033[K\r"
 
     else
 
         echo -e "\n$WHITE [+] Looking for suspicious content in downloaded files from $WEBSITE $DEFAULTCOLOR\n"
         find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp \
         $FILESFOLDER/$WEBSITE/ $LOG /{} 0 $VERBOSE \;
+        echo -en "\033[K\r"
     
     fi
 }
@@ -548,8 +554,11 @@ function searchLocalFilesByContent
         mkdir $FILESFOLDER/$BASENAME
         mkdir $FILESFOLDER/$BASENAME/tmp 
     fi
+
     find $LOCALFOLDER -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ \
     $LOG $BASENAME/{} $BASENAME $VERBOSE \;
+
+    echo -en "\033[K\r"
 
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
@@ -569,8 +578,8 @@ function searchLocalFilesByRegex
 {
     LOCALFOLDER=$1
     BASENAME=$(basename $LOCALFOLDER)
-    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX $REGEX on $LOCALFOLDER"
-    echo -e "$DEFAULTCOLOR"
+    echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX $REGEX on $LOCALFOLDER $DEFAULTCOLOR"
+
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
         mkdir $FILESFOLDER/$BASENAME/tmp 
@@ -578,6 +587,8 @@ function searchLocalFilesByRegex
     
     find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
     $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
+
+    echo -en "\033[K\r"
 
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
@@ -627,6 +638,8 @@ fi
 
 if [ $GOOGLE != "notset" -a $LHOST == "notset" ]; then
 
+    dateLog
+    echo " Using Google to find files" >> $LOG
     searchFilesWithGoogle
     exit
 
@@ -651,19 +664,24 @@ elif [ $LFOLDER != "notset" ]; then
         echo -e "$RED [!] ERROR: $YELLOW Directory does not exist $DEFAULTCOLOR"
         exit
     else
-        if [ $ONLY == "filenames" ];then
+
+        if [ $ONLY == "filenames" ]; then
+            dateLog
             searchLocalFilesByName $LFOLDER
             exit
-        elif [ $ONLY == "contents" ];then
+        elif [ $ONLY == "contents" ]; then
+            dateLog
             searchLocalFilesByContent $LFOLDER
             exit
         elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
             searchLocalFilesWithYara $YARAFILE $LFOLDER
             exit
         elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
+            dateLog
             searchLocalFilesByRegex $LFOLDER
             exit
         else
+            dateLog
             searchLocalFilesByName $LFOLDER
             searchLocalFilesByContent $LFOLDER
             exit

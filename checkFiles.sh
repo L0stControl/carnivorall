@@ -175,6 +175,8 @@ fi
 
 for WORDPATTERN in $PATTERNMATCH
     do
+        echo -en "$GREEN Checking file => $DEFAULTCOLOR$FILENAMEMSG \033[K\r"
+        
         if [[ ${FILENAME: -5} =~ ".XLSX" ]] || [[ ${FILENAME: -5} =~ ".DOCX" ]] || [[ ${FILENAME: -5} =~ ".PPTX" ]] ; then
         
             officeNew

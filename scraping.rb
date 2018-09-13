@@ -73,7 +73,7 @@ if listLinks.length != 0
     
         link = URI.decode(linkRaw.encode("UTF-16be", :invalid=>:replace, :replace=>"?").encode('UTF-8').split("=")[2].split("&")[0] )
         fileName = link.split("/").last
-        print " [+]".green + " Downloading File: #{link} ".white
+        print " [+]".green + " Downloading File => #{link} ".white
 
         begin
         
