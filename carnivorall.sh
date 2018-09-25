@@ -4,7 +4,7 @@
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
 # Date            :2018/09/05
-# Version         :0.8.6    
+# Version         :0.9.7    
 # Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
 #=============================================================================================
 
@@ -57,7 +57,7 @@ function banner {
 
         -lH, --lhost 192.168.0.1                     Local ip to receive zombies responses
         -lP, --lport 80                              Local port to listen
-        -pP, --pspayload <payload.ps1>                 Powershell payload file
+        -pP, --pspayload <payload.ps1>               Powershell payload file
 
         Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
         Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
@@ -182,6 +182,14 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+function getConfs {
+    CONFIG=$(echo "$SCRIPTHOME/carnivorall.conf")
+    grep "^[^#;]" $CONFIG > /tmp/carnivorall.conf.tmp
+    OPTION=$(envsubst < /tmp/carnivorall.conf.tmp | grep $1 |awk -F"=" '{print $2}' )
+    echo $OPTION
+    rm -rf /tmp/carnivorall.conf.tmp
+}
+
 #-------------------------#
 # Constants and variables #
 #-------------------------#
@@ -193,28 +201,28 @@ USERNAME="${USERNAME:=notset}"
 PASSWORD="${PASSWORD:=notset}"
 YARAFILE="${YARAFILE:=notset}"
 ONLY="${ONLY:=notset}"
-DELAY="${DELAY:=0.2}"
+DELAY="${DELAY:=$(getConfs DELAY)}"
 EMAILS="${EMAILS:=0}"
 REGEX="${REGEX:=notset}"
-PATTERNMATCH="${PATTERNMATCH:=senha passw}"
+PATTERNMATCH="${PATTERNMATCH:=$(getConfs PATTERNMATCH)}"
 PIDCARNIVORALL=$$
 GOOGLE="${GOOGLE:=notset}"
 WEBSITE="${WEBSITE:=notset}"
 LHOST="${LHOST:=notset}"
 PSPAYLOAD="${PSPAYLOAD:=notset}"
-LPORT="${LPORT:=80}"
+LPORT="${LPORT:=$(getConfs LPORT)}"
 LFOLDER="${LFOLDER:=notset}"
-VERBOSE="${VERBOSE:=yes}"
-MOUNTPOINT=~/.carnivorall/mnt
+VERBOSE="${VERBOSE:=$(getConfs VERBOSE)}"
+MOUNTPOINT=$(getConfs MOUNTPOINT)
 SHARESFILE=~/.carnivorall/shares.txt
-FILESFOLDER=~/.carnivorall/files
+FILESFOLDER=$(getConfs FILESFOLDER)
 SMB=$(whereis smbclient |awk '{print $2}')
 MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
 GSCRIPT=$(whereis gs |awk '{print $2}')
 RUBY=$(whereis ruby |awk '{print $2}')
-LOG=~/.carnivorall/log
+LOG=$(getConfs LOG)
 SHARES=""
 DEFAULTCOLOR="\033[0m"
 BLACK="\033[0;30m"
