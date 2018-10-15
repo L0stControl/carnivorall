@@ -1,12 +1,12 @@
 #!/bin/bash
-#=============================================================================================
+#===========================================================================================================
 # Title           :carnivorall.sh
 # Description     :Look for sensitive information on the internal network.
 # Authors         :L0stControl and BFlag
-# Date            :2018/09/05
-# Version         :0.9.7    
-# Dependecies     :smbclient / ghostscript / zip / ruby (nokogiri / httparty / colorize / yara 
-#=============================================================================================
+# Date            :2018/10/15
+# Version         :1.0.0
+# Dependecies     :cifs-utils / smbclient / GhostScript / zip / ruby (nokogiri / httparty / colorize / yara 
+#===========================================================================================================
 
 SCRIPTHOME=$(readlink -f "$0" | rev | cut -d '/' -f 2- | rev)
 export PATH=$PATH:$SCRIPTHOME
@@ -217,6 +217,7 @@ MOUNTPOINT=$(getConfs MOUNTPOINT)
 SHARESFILE=~/.carnivorall/shares.txt
 FILESFOLDER=$(getConfs FILESFOLDER)
 SMB=$(whereis smbclient |awk '{print $2}')
+CIFS=$(whereis cifscreds |awk '{print $2}')
 MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
@@ -243,18 +244,23 @@ function checkDependencies
 {
     EXIT=0
 
-    if ! [[ ${SMB: -9} =~ "smbclient" ]] ; then
-        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW smbclient$RED package \n"
+    if ! [[ ${CIFS: -9} =~ "cifscreds" ]] ; then
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW cifs-utils$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi    
     
+    if ! [[ ${SMB: -9} =~ "smbclient" ]] ; then
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW smbclient$RED package $DEFAULTCOLOR\n"
+        EXIT=1
+    fi
+
     if ! [[ ${GSCRIPT: -2} =~ "gs" ]] ; then
-        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ghostscript$RED package \n"
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ghostscript$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi
 
     if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
-        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package \n"
+        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi
 
@@ -263,7 +269,7 @@ function checkDependencies
     for GEM in "${DEPGEMS[@]}"
     do
         if ! ( echo $RUBYGEMS | grep -i $GEM ) > /dev/null 2>&1 ; then
-            echo -e "\n$RED [!] Ruby dependecies error, please type$YELLOW gem install $GEM"
+            echo -e "\n$RED [!] Ruby dependecies error, please type$YELLOW gem install $GEM $DEFAULTCOLOR"
             EXIT=1
         fi
     done

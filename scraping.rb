@@ -4,7 +4,7 @@
 # Description     :Get files from the internet using search engines
 # Authors         :L0stControl
 # Date            :2018/04/02
-# Version         :0.1.1    
+# Version         :0.2.1    
 # Dependecies     :ruby gems - nokogiri / HTTParty / colorize
 #=========================================================================
 
@@ -68,27 +68,35 @@ end
 
 if listLinks.length != 0
 
-# Download files
+    counter = 0
+    threads = [] 
+
     listLinks.each do |linkRaw|
     
-        link = URI.decode(linkRaw.encode("UTF-16be", :invalid=>:replace, :replace=>"?").encode('UTF-8').split("=")[2].split("&")[0] )
-        fileName = link.split("/").last
-        print " [+]".green + " Downloading File => #{link} ".white
+        threads[counter] = Thread.new {
 
-        begin
+            link = URI.decode(linkRaw.encode("UTF-16be", :invalid=>:replace, :replace=>"?").encode('UTF-8').split("=")[2].split("&")[0] )
+            fileName = link.split("/").last
+
+            begin
         
-        remoteFile = HTTParty.get(link, {headers: {"User-Agent" => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Carnivorall/0.6.1 Safari/537.36"}})
-        puts "[OK]".green
-            File.open("#{tmpDir}/#{fileName}", "w") do |file|
-                file.write(remoteFile)   
-                file.close
+                remoteFile = HTTParty.get(link, {headers: {"User-Agent" => "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Carnivorall/1.0.0 Safari/537.36"}})
+                puts " [+]".green + " Downloading File => #{link} ".white + "[OK]".green
+                    File.open("#{tmpDir}/#{fileName}", "w") do |file|
+                        file.write(remoteFile)   
+                        file.close
+                    end
+            rescue
+        
+                puts " [+]".green + " Downloading File => #{link} ".white + "[FAIL]".red
+
             end
-        
-        rescue
-        
-            puts "[FAIL]".red
-    
-        end
+        }
+        counter += 1
     end
+
+    threads.each{|t| t.join}
+
 end
+
 

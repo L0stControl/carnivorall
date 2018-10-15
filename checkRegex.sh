@@ -4,7 +4,7 @@
 # Description     :Script to scan files looking for sensitive information using regex.
 # Authors         :L0stControl and BFlag
 # Date            :2018/09/05
-# Version         :1.2.3    
+# Version         :1.3.4    
 #====================================================================================
 
 FILENAME=$1
@@ -114,7 +114,7 @@ elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${
 
     officeOldRegex
 
-elif [[ ${FILENAME: -4} =~ ".PDF" ]]; then
+elif [[ ${FILENAME: -4} =~ ".PDF" ]] || [[ $(file "$FILENAME"  | grep -i "PDF") ]]  > /dev/null 2>&1 ; then
 
     if [ $VERBOSE == "yes" ]; then
         if RESULT=$($GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -sstdout=%stderr \

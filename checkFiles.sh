@@ -3,8 +3,8 @@
 # Title           :checkFiles.sh
 # Description     :Script to scan files looking for sensitive information.
 # Authors         :L0stControl and BFlag
-# Date            :2018/09/05
-# Version         :0.2.8    
+# Date            :2018/10/15
+# Version         :0.3.9    
 #=========================================================================
 
 FILENAME=$1
@@ -73,7 +73,7 @@ function officeOld
         if  RESULT=$(grep -i -a -A2 -B2 "$WORDPATTERN" "$FILENAME"); then
             cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
             echo
-            echo -e "$RESULT" | grep -i -A2 -B2 --color "$WORDPATTERN"
+            echo -e "$RESULT" | grep -i -a -A2 -B2 --color "$WORDPATTERN"
             echo
         fi 
 
@@ -189,7 +189,7 @@ for WORDPATTERN in $PATTERNMATCH
 
             officeOld
 
-        elif [[ ${FILENAME: -4} =~ ".PDF" ]]; then
+        elif [[ ${FILENAME: -4} =~ ".PDF" ]] || [[ $(file "$FILENAME"  | grep -i "PDF") ]]  > /dev/null 2>&1 ; then
 
             if [ $VERBOSE == "yes" ]; then 
                 
