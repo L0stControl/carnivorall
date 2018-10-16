@@ -116,9 +116,11 @@ elif [[ ${FILENAME: -4} =~ ".DOC" ]] || [[ ${FILENAME: -4} =~ ".XLS" ]] || [[ ${
 
 elif [[ ${FILENAME: -4} =~ ".PDF" ]] || [[ $(file "$FILENAME"  | grep -i "PDF") ]]  > /dev/null 2>&1 ; then
 
+    NUMCORES=$(nproc)
+
     if [ $VERBOSE == "yes" ]; then
-        if RESULT=$($GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -sstdout=%stderr \
-            -dBATCH "$FILENAME" 2>/dev/null | egrep -i -A2 -B2 "$REGEX") ; then
+        if RESULT=$( timeout 60 $GS -dNumRenderingThreads="$NUMCORES" -dMaxPatternBitmap=2000000 -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -sstdout=%stderr \
+            -dBATCH "$FILENAME" 2>/dev/null | tr -s '[:blank:]' |egrep -i -A2 -B2 "$REGEX") ; then
             
             cpFiles "$GREEN [+]$WHITE - Looking for REGEX $RED$REGEX$WHITE on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
             echo
@@ -126,8 +128,8 @@ elif [[ ${FILENAME: -4} =~ ".PDF" ]] || [[ $(file "$FILENAME"  | grep -i "PDF") 
             echo
         fi
     else
-        if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT \
-        -dQUIET -dBATCH "$FILENAME" | egrep -i "$REGEX" ) > /dev/null 2>&1 ; then
+        if ( timeout 60 $GS -dNumRenderingThreads="$NUMCORES" -dMaxPatternBitmap=2000000 -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT \
+        -dQUIET -dBATCH "$FILENAME" | tr -s '[:blank:]' | egrep -i "$REGEX" ) > /dev/null 2>&1 ; then
             
             cpFiles "$GREEN [+]$WHITE - Looking for REGEX $RED$REGEX$WHITE on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
 

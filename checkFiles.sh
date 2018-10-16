@@ -51,7 +51,7 @@ function officeNew
     if [ $VERBOSE == "yes" ]; then
 
         if  RESULT=$(grep -i -R -A2 -B2 "$WORDPATTERN" $TMPDIR/*) ; then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
             echo
             echo "$RESULT" | grep -i -A2 -B2 --color "$WORDPATTERN"
             echo
@@ -60,7 +60,7 @@ function officeNew
     else
 
         if ( grep -i -R "$WORDPATTERN" $TMPDIR/* ) > /dev/null 2>&1 ; then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
         fi
    
     fi
@@ -71,7 +71,7 @@ function officeOld
     if [ $VERBOSE == "yes" ]; then
 
         if  RESULT=$(grep -i -a -A2 -B2 "$WORDPATTERN" "$FILENAME"); then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
             echo
             echo -e "$RESULT" | grep -i -a -A2 -B2 --color "$WORDPATTERN"
             echo
@@ -80,7 +80,7 @@ function officeOld
     else
 
         if ( grep -i -a "$WORDPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
         fi 
 
     fi   
@@ -93,7 +93,7 @@ function defaultFiles
     if [ $VERBOSE == "yes" ]; then
 
         if  RESULT=$(grep -i -a -E -A2 -B2 "$DEFAULTPATTERN" "$FILENAME") ; then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
             echo
             echo -e "$RESULT" | grep -i -a -E -A2 -B2 --color "$DEFAULTPATTERN"
             echo
@@ -102,7 +102,7 @@ function defaultFiles
     else
 
         if ( grep -i -a -E "$DEFAULTPATTERN" "$FILENAME" ) > /dev/null 2>&1 ; then
-            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$DEFAULTPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
         fi
 
     fi
@@ -126,7 +126,7 @@ function pstFiles
         
         case $OPT2 in
         "d")
-            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG $GREEN[OK!]$DEFAULTCOLOR"
             exit
             ;;
         "s")
@@ -134,7 +134,7 @@ function pstFiles
             ;;
         "a")
             setPstDefault 1
-            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+            cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG $GREEN[OK!]$DEFAULTCOLOR"
             ;;
         "n")
             setPstDefault 2
@@ -146,7 +146,7 @@ function pstFiles
         esac 
     elif [[ $DEFAULTPST -eq 1 ]]; then
         
-        cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG...... $GREEN[OK!]$DEFAULTCOLOR"
+        cpFiles "$GREEN [+]$WHITE - Copying [$YELLOW PST file $WHITE] from  $FILENAMEMSG $GREEN[OK!]$DEFAULTCOLOR"
     
     elif [[ $DEFAULTPST -eq 2 ]]; then
     
@@ -163,7 +163,7 @@ fi
 
 if [[ ${FILENAME: -4} =~ ".KEY" ]] || [[ ${FILENAME: -4} =~ ".PCF" ]] || [[ ${FILENAME: -5} =~ ".OVPN" ]] ; then
 
-    cpFiles "$GREEN [+]$WHITE - Possible [$RED VPN CONF / KEY $WHITE] $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+    cpFiles "$GREEN [+]$WHITE - Possible [$RED VPN CONF / KEY $WHITE] $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
 
 fi
 
@@ -191,12 +191,14 @@ for WORDPATTERN in $PATTERNMATCH
 
         elif [[ ${FILENAME: -4} =~ ".PDF" ]] || [[ $(file "$FILENAME"  | grep -i "PDF") ]]  > /dev/null 2>&1 ; then
 
+            NUMCORES=$(nproc)
+            
             if [ $VERBOSE == "yes" ]; then 
                 
-                if RESULT=$($GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET -sstdout=%stderr \
-                    -dBATCH "$FILENAME" 2>/dev/null | grep -i -A2 -B2 "$WORDPATTERN") ; then
+                if RESULT=$( timeout 60 $GS -dNumRenderingThreads="$NUMCORES" -dMaxPatternBitmap=2000000 -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- \
+                    -dNOPROMPT -dQUIET -sstdout=%stderr -dBATCH "$FILENAME" 2>/dev/null | tr -s '[:blank:]' |grep -i -A2 -B2 "$WORDPATTERN") ; then
                 
-                    cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+                    cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
                     echo
                     echo -e "$RESULT" | grep -i -A2 -B2 --color "$WORDPATTERN"
                     echo
@@ -205,10 +207,10 @@ for WORDPATTERN in $PATTERNMATCH
 
             else
 
-                if ( $GS -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET \
-                    -dBATCH "$FILENAME" | grep -i "$WORDPATTERN" ) > /dev/null 2>&1 ; then
+                if ( timeout 60 $GS -dNumRenderingThreads="$NUMCORES" -dMaxPatternBitmap=2000000 -dNOPAUSE -sDEVICE=txtwrite -sOutputFile=- -dNOPROMPT -dQUIET \
+                    -dBATCH "$FILENAME" | tr -s '[:blank:]' | grep -i "$WORDPATTERN" ) > /dev/null 2>&1 ; then
                 
-                    cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG...... $GREEN[FOUND!]$DEFAULTCOLOR"
+                    cpFiles "$GREEN [+]$WHITE - Looking for word [$RED$WORDPATTERN$WHITE] on file $FILENAMEMSG $GREEN[FOUND!]$DEFAULTCOLOR"
 
                 fi
             fi
