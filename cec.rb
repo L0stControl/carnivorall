@@ -22,7 +22,7 @@ lport = ARGV[4]
 
 set :dump_errors, false
 set :raise_errors, false
-set :logging, false
+set :logging, true
 set :environment, :production
 set :show_exceptions, false
 

