@@ -762,15 +762,15 @@ if [ -s "$SHARESFILE" ];then
                if [ $ONLY == "filenames" ];then
                    searchFilesByName $TARGETHOST $TARGETPATH
                
-               elif [ $ONLY == "contents" ];then
-                   searchFilesByContent $TARGETHOST $TARGETPATH           
-               
-               elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then 
-                   searchFilesWithYara $YARAFILE
-               
                elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
                    searchFilesByRegex $TARGETHOST $TARGETPATH
-               
+
+               elif [ $ONLY == "contents" ];then
+                   searchFilesByContent $TARGETHOST $TARGETPATH
+                 
+               elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then 
+                   searchFilesWithYara $YARAFILE
+                              
                else
                    searchFilesByName $TARGETHOST $TARGETPATH
                    searchFilesByContent $TARGETHOST $TARGETPATH           
@@ -807,15 +807,15 @@ if [ -s "$SHARESFILE" ];then
            
            if [ $ONLY == "filenames" ];then
                searchFilesByName $TARGETHOST $TARGETPATH
+
+           elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
+               searchFilesByRegex $TARGETHOST $TARGETPATH
            
            elif [ $ONLY == "contents" ];then
                searchFilesByContent $TARGETHOST $TARGETPATH           
            
            elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
                searchFilesWithYara $YARAFILE
-           
-           elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
-               searchFilesByRegex $TARGETHOST $TARGETPATH
            
            else
                searchFilesByName $TARGETHOST $TARGETPATH
