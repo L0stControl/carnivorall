@@ -39,10 +39,10 @@ class Scanner
 
   def scan
     @list.each do |word|
-      bucket = S3.new word
+      bucket = S3.new(word)
 
       if bucket.exists?
-        puts "Found bucket: #{bucket.bucket} (#{bucket.code})".red
+        puts "Found bucket: #{bucket.domain} (#{bucket.code})".red
       end
     end
   end
@@ -96,6 +96,7 @@ end
 
 wordlist = Wordlist.from_file(ARGV[0], 'common_bucket_prefixes.txt')
 
-puts "Generated wordlist from file, #{wordlist.length} items..."
+puts "\n\n Authors\n\n --> L0stControl\n\n --> GhostNil \n\n"
+puts "\n\n[+] Generated wordlist from file, #{wordlist.length} items..."
 
 Scanner.new(wordlist).scan

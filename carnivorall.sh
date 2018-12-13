@@ -46,7 +46,7 @@ function banner {
        -lD, --localfolder /path/                    For search sensitive information in local files
         -h, --help                                  Display options
         -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
-        -b, --bucket                                Permutation finder, to search for amazonaws bucket
+        -b, --bucket "name of company"                               Permutation finder, to search for amazonaws bucket
         -w, --website "domain.com"                  Website used at *-g/--google* feature
         -v, --verbose no                            Display all matches at run time (default yes)
 
@@ -237,7 +237,6 @@ MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
 GSCRIPT=$(whereis gs |awk '{print $2}')
-RUBY=$(whereis ruby |awk '{print $2}')
 LOG=$(getConfs LOG)
 SHARES=""
 DEFAULTCOLOR="\033[0m"
@@ -249,7 +248,7 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 EXITCTRL=0
-DEPGEMS=("nokogiri" "httparty" "colorize" "sinatra")
+
 
 #-----------#
 # Functions #
@@ -273,21 +272,6 @@ function checkDependencies
         echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ghostscript$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi
-
-    if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
-        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package $DEFAULTCOLOR\n"
-        EXIT=1
-    fi
-
-    RUBYGEMS=$(gem list --local)
-
-    for GEM in "${DEPGEMS[@]}"
-    do
-        if ! ( echo $RUBYGEMS | grep -i $GEM ) > /dev/null 2>&1 ; then
-            echo -e "\n$RED [!] Ruby dependecies error, please type$YELLOW gem install $GEM $DEFAULTCOLOR"
-            EXIT=1
-        fi
-    done
 
     if [ $EXIT -eq 1 ]; then
         echo
