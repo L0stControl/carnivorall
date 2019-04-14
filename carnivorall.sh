@@ -176,11 +176,6 @@ case $KEY in
     shift 
     shift 
     ;;
-    -xxx|--nudes)
-    XXX="$2"
-    shift 
-    shift 
-    ;;
     --default)
     DEFAULT=YES
     shift 
@@ -227,7 +222,6 @@ VERBOSE="${VERBOSE:=$(getConfs VERBOSE)}"
 MOUNTPOINT=$(getConfs MOUNTPOINT)
 PSEXEC=$(getConfs PSEXEC)
 METHOD="${METHOD:=$(getConfs PSEXEC)}"
-XXX="${XXX:=notset}"
 SHARESFILE=~/.carnivorall/shares.txt
 FILESFOLDER=$(getConfs FILESFOLDER)
 SMB=$(whereis smbclient |awk '{print $2}')
@@ -273,7 +267,7 @@ function checkDependencies
         EXIT=1
     fi
 
-    if ! [[ ${RUBY} =~ "ruby" ]] ; then
+    if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
         echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi
@@ -627,34 +621,6 @@ function searchLocalFilesByRegex
     echo
 }
 
-function searchNudes
-{
-    HOSTSMB=$1
-    PATHSMB=$2
-    xxx.sh
-    echo -e "\n$WHITE [+] Looking for Nud35 on smb://$HOSTSMB/$PATHSMB"
-    echo -e "$DEFAULTCOLOR"
-    if [ ! -d $FILESFOLDER/$HOSTSMB\_$PATHSMB/xxx ]; then
-        mkdir $FILESFOLDER/$HOSTSMB\_$PATHSMB/xxx 2>&1 > /dev/null
-    fi
-
-    find $MOUNTPOINT -type f \( -iname "*.jpg" -o -iname "*.jpeg" \) > /tmp/jpegs.txt
-    cat /tmp/jpegs.txt |while read LINES
-    do
-      RESULT=$(/usr/bin/node xxx/xxx.js "$LINES")
-        if [ $RESULT == "true" ]; then
-          echo -e " [+]$RED HIGH PUSSYBILITY!$DEFAULTCOLOR => $( basename "$LINES" ) "
-          #echo -e " [+]$RED HIGH PUSSYBILITY!$DEFAULTCOLOR => "$LINES
-          cp "$LINES" $FILESFOLDER/$HOSTSMB\_$PATHSMB/xxx 
-        else
-          echo -en "$GREEN Checking file => $DEFAULTCOLOR$( basename "$LINES") \033[K\r"
-          #echo -en "$GREEN Checking file => $DEFAULTCOLOR "$LINES" \033[K\r"
-        fi
-    done
-    echo "" 
-}
-
-
 #------#
 # main #
 #------#
@@ -795,9 +761,6 @@ if [ -s "$SHARESFILE" ];then
            
                if [ $ONLY == "filenames" ];then
                    searchFilesByName $TARGETHOST $TARGETPATH
-
-               elif [[ $XXX != "notset" ]]; then
-                   searchNudes $TARGETHOST $TARGETPATH
                
                elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
                    searchFilesByRegex $TARGETHOST $TARGETPATH
@@ -844,9 +807,6 @@ if [ -s "$SHARESFILE" ];then
            
            if [ $ONLY == "filenames" ];then
                searchFilesByName $TARGETHOST $TARGETPATH
-
-           elif [[ $XXX != "notset" ]]; then
-               searchNudes $TARGETHOST $TARGETPATH
 
            elif [ \( $ONLY == "regex" -a $REGEX != "notset" \) -o \( $REGEX != "notset" \) ] ; then
                searchFilesByRegex $TARGETHOST $TARGETPATH
