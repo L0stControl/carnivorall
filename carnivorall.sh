@@ -267,7 +267,7 @@ function checkDependencies
         EXIT=1
     fi
 
-    if ! [[ ${RUBY: -4} =~ "ruby" ]] ; then
+    if ! [[ ${RUBY} =~ "ruby" ]] ; then
         echo -e "\n$RED [!] Dependecies error, you need to install$YELLOW ruby$RED package $DEFAULTCOLOR\n"
         EXIT=1
     fi
